@@ -8,10 +8,8 @@ from utils import dateutils
 
 def getReportDate(actDate):
     """
-    Args:
-        act_date: str/datetime, 任意日期
-
-    Returns: str, 对应应使用的报告日期， 从wind数据库中爬取
+    :param actDate: str/datetime, 任意日期
+    :return: str, 对应应使用的报告日期， 从wind数据库中爬取
     此函数的目的是要找到，任意时刻可使用最新的季报数据的日期，比如2-20日可使用的最新季报是去年的三季报（对应日期为9-30），
 
     """
@@ -42,12 +40,11 @@ def getReportDate(actDate):
 
 def getUniverseSingleFactor(path, IndexName=['tradeDate', 'secID']):
     """
-    Args:
-        path:  str, path of csv file, col =[datetime, secid, factor]
-
-    Returns: pd.Series, multiindex =[datetime, secid] value = factor
-
+    :param path: str, path of csv file, col =[datetime, secid, factor]
+    :param IndexName: multi index name to be set
+    :return: pd.Series, multiindex =[datetime, secid] value = factor
     """
+
     factor = pd.read_csv(path)
     factor.columns = ['tradeDate', 'secID', 'factor']
     factor['tradeDate'] = pd.to_datetime(factor['tradeDate'], format='%Y%m%d')
@@ -60,14 +57,11 @@ def getUniverseSingleFactor(path, IndexName=['tradeDate', 'secID']):
 
 def adjustFactorDate(factorRaw, startDate, endDate, freq='m'):
     """
-    Args:
-        factorRaw: pd.DataFrame, multiindex =['tradeDate','secID']
-        startDate: str, start date of factor data
-        endDate:  str, end date of factor data
-        freq: str, optional, tiaocang frequency
-        returnMultiIndex: bool, optional, determine the types of return var. True -> multiindex pd.Series, false, pd.DataFrame
-
-    Returns: pd.Series, multiindex =[datetime, secid] / pd.DataFrame
+    :param factorRaw: pd.DataFrame, multiindex =['tradeDate','secID']
+    :param startDate: str, start date of factor data
+    :param endDate: str, end date of factor data
+    :param freq: str, optional, tiaocang frequency
+    :return: pd.Series, multiindex =[datetime, secid] / pd.DataFrame
     此函数的主要目的是 把原始以报告日为对应日期的因子数据 改成 调仓日为日期（读取对应报告日数据）
     """
 
@@ -93,16 +87,14 @@ def adjustFactorDate(factorRaw, startDate, endDate, freq='m'):
 
 def getMultiIndexData(multiIdxData, firstIdxName, firstIdxVal, secIdxName=None, secIdxVal=None):
     """
-    Args:
-        multiIdxData: pd.Series, multi-index =[firstIdxName, secIdxName]
-        firstIdxName: str, first index name of multiIndex series
-        firstIdxVal: str/list, selected value of first index
-        secIdxName: str, second index name of multiIndex series
-        secIdxVal: str/list, selected valuer of second index
-
-    Returns: pd.Series, selected value with multi-index = [firstIdxName, secIdxName]
-
+    :param multiIdxData: pd.Series, multi-index =[firstIdxName, secIdxName]
+    :param firstIdxName: str, first index name of multiIndex series
+    :param firstIdxVal: str/list, selected value of first index
+    :param secIdxName: str, second index name of multiIndex series
+    :param secIdxVal: str/list, selected valuer of second index
+    :return: pd.Series, selected value with multi-index = [firstIdxName, secIdxName]
     """
+
     if isinstance(firstIdxVal, basestring):
         firstIdxVal = [firstIdxVal]
     data = multiIdxData.loc[multiIdxData.index.get_level_values(firstIdxName).isin(firstIdxVal)]
