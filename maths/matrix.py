@@ -31,7 +31,7 @@ def eigValPct(eigVals, pct):
 
 def pcaDecomp(dataMat, pct=0.9):
     """
-    :param dataMat: np.mat, 数据矩阵, 列向量为特征向量
+    :param dataMat: np.maths, 数据矩阵, 列向量为特征向量
     :param pct: 阈值, 降维后需要达到的方差占比
     :return: 降维后的数据集, 和 重构数据
     """
