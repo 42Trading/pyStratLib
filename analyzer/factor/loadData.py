@@ -10,7 +10,7 @@ _factorPathDict = {
     'PRTYOY': ['..//..//data//factor//ProfitYoY.csv', 'q'],  # 净利润同比增长率,季度频率
     'TRN': ['..//..//data//factor//Turnover.csv', 'm'],  # 月度换手率,月度频率
     'ROEYOY': ['..//..//data//factor//RoeYoY.csv', 'q'],  # 净利润增长率（季度同比）,季度频率
-    'NAV': ['..//..//data//factor//net_asset.csv', 'q'],  # 净资产,季度频率
+    'NAV': ['..//..//data//factor//NetAsset.csv', 'm'],  # 当日净资产,月度频率
     'ROE': ['..//..//data//factor//ROE.csv', 'q'],  # 净资产收益率,季度频率
     'PE': ['..//..//data//factor//PE_TTM.csv', 'm'],  # 市盈率,月度频率
     'TTM': ['..//..//data//factor//TTM.csv', 'q'],  # 销售毛利率,季度频率
