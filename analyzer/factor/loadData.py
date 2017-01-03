@@ -8,6 +8,7 @@ _factorPathDict = {
     'BPS': ['..//..//data//factor//BPS.csv', 'q'],  # 每股净资产,季度频率,
     'OPR': ['..//..//data//factor//OperRev.csv', 'q'],  # 营业利润,季度频率
     'PRTYOY': ['..//..//data//factor//ProfitYoY.csv', 'q'],  # 净利润同比增长率,季度频率
+    'PRITTM': ['..//..//data//factor//NetProfitTTM.csv', 'q'],  # 净利润TTM,季度频率
     'TRN': ['..//..//data//factor//Turnover.csv', 'm'],  # 月度换手率,月度频率
     'ROEYOY': ['..//..//data//factor//RoeYoY.csv', 'q'],  # 净利润增长率（季度同比）,季度频率
     'NAV': ['..//..//data//factor//net_asset.csv', 'q'],  # 净资产,季度频率
