@@ -19,6 +19,18 @@ _factorPathDict = {
 }
 
 
+def getDataDiv(saveCSVPath, numerator='NAV', denominator='CAP', freq='m'):
+    numeratorData = pd.read_csv(_factorPathDict[numerator][0])
+    denominatorData = pd.read_csv(_factorPathDict[denominator][0])
+    numeratorDataAdj = numeratorData if _factorPathDict[numerator][1] == freq else \
+        cleanData.adjustFactorDate(numeratorData, numeratorData.iloc[0,0], numeratorData.iloc[-1,0], freq)
+    denominatorDataAdj = denominatorData if _factorPathDict[denominator][1] == freq else \
+        cleanData.adjustFactorDate(denominatorData, denominatorData.iloc[0,0], denominatorData.iloc[-1,0], freq)
+
+    ret = numeratorDataAdj.divide(denominatorDataAdj, axis='index')
+    ret.to_csv(saveCSVPath)
+    return ret
+
 class FactorLoader(object):
     def __init__(self, startDate, endDate, factorNames, freq='m'):
         self.__startDate = startDate
@@ -49,6 +61,7 @@ class FactorLoader(object):
 
 
 if __name__ == "__main__":
-    factor = FactorLoader('2015-01-05', '2015-12-30', ['NAV', 'ROE', 'RETURN'])
-    ret = factor.getFactorData()
-    print ret['RETURN']
+    #factor = FactorLoader('2015-01-05', '2015-12-30', ['NAV', 'ROE', 'RETURN'])
+    #ret = factor.getFactorData()
+    #print ret['RETURN']
+    print getDataDiv('BP.csv', 'NAV', 'CAP')
