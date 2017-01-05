@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
+import datetime
 import pandas as pd
 from PyFin.DateUtilities import Date
-from PyFin.Utilities import pyFinAssert
-
 from utils import dateutils
 
 
@@ -72,9 +71,10 @@ def adjustFactorDate(factorRaw, startDate, endDate, freq='m'):
     reportDate = [getReportDate(date) for date in tiaocangDate]
 
     for i in range(len(tiaocangDate)):
-        query = factorRaw.loc[factorRaw.index.get_level_values('tradeDate') == reportDate[i]]
+        query = factorRaw.loc[
+            factorRaw.index.get_level_values('tradeDate') == datetime.datetime.strptime(reportDate[i], "%Y-%m-%d")]
         query = query.reset_index().drop('tradeDate', axis=1)
-        query['tiaoCangDate'] = [tiaocangDate[i]] * query['secID'].count()
+        query['tiaoCangDate'] = [datetime.datetime.strptime(tiaocangDate[i], "%Y-%m-%d")] * query['secID'].count()
         ret = pd.concat([ret, query], axis=0)
     ret = ret[['tiaoCangDate', 'secID', 'factor']]  # 清理列
 
