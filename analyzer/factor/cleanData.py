@@ -15,9 +15,9 @@ def getReportDate(actDate):
     """
 
     if isinstance(actDate, str):
-        actDate = dateutils.stringToDatetime(actDate)
-    actMonth = actDate.month
-    actYear = actDate.year
+        actDate = Date.strptime(actDate)
+    actMonth = actDate.month()
+    actYear = actDate.year()
     if 1 <= actMonth <= 3:  # 第一季度使用去年三季报的数据
         year = actYear - 1
         month = 9

@@ -1,56 +1,39 @@
 # coding=utf-8
-from PyFin.DateUtilities import Date
-from PyFin.DateUtilities import Calendar
-from PyFin.DateUtilities import Schedule
-from PyFin.DateUtilities import Period
-from PyFin.Enums import TimeUnits
-from PyFin.Enums import BizDayConventions
-from PyFin.Enums.Weekdays import Weekdays
 import datetime as dt
+from PyFin.DateUtilities import Calendar
+from PyFin.DateUtilities import Date
+from PyFin.DateUtilities import Period
+from PyFin.DateUtilities import Schedule
+from PyFin.Enums import BizDayConventions
+from PyFin.Enums import TimeUnits
+from PyFin.Enums.Weekdays import Weekdays
 
 _freqDict = {'d': TimeUnits.Days,
-              'b': TimeUnits.BDays,
-              'w': TimeUnits.Weeks,
-              'm': TimeUnits.Months,
-              'y': TimeUnits.Years}
-
-
-def stringToDatetime(strDate, format="%Y-%m-%d"):
-    """
-    Args:
-        strDate: str, some date,
-        format: str, optional, format of the string date
-
-    Returns: datetime type of the date
-
-    """
-    return dt.datetime.strptime(strDate, format)
+             'b': TimeUnits.BDays,
+             'w': TimeUnits.Weeks,
+             'm': TimeUnits.Months,
+             'y': TimeUnits.Years}
 
 
 def getPosAdjDate(startDate, endDate, format="%Y-%m-%d", calendar='China.SSE', freq='m'):
     """
-    Args:
-        startDate: str, start date of strategy
-        endDate: str, end date of strategy
-        format: str, optional, time format of the date
-        calendar: str, optional, name of the calendar to use in dates math
-
-
-    Returns: list of str, pos adjust dates
-
+    :param startDate: str, start date of strategy
+    :param endDate: str, end date of strategy
+    :param format: optional, format of the string date
+    :param calendar: str, optional, name of the calendar to use in dates math
+    :param freq: str, optional, the frequency of data
+    :return: list of str, pos adjust dates
     """
-    dtStartDate = stringToDatetime(startDate, format)
-    dtEndDate = stringToDatetime(endDate, format)
 
-    dStartDate = Date(dtStartDate.year, dtStartDate.month, dtStartDate.day)
-    dEndDate = Date(dtEndDate.year, dtEndDate.month, dtEndDate.day)
+    dStartDate = Date.strptime(startDate, format)
+    dEndDate = Date.strptime(endDate, format)
 
     cal = Calendar(calendar)
     posAdjustDate = Schedule(dStartDate,
-                     dEndDate,
-                     Period(1, _freqDict[freq]),
-                     cal,
-                     BizDayConventions.Unadjusted)
+                             dEndDate,
+                             Period(1, _freqDict[freq]),
+                             cal,
+                             BizDayConventions.Unadjusted)
     # it fails if setting dStartDate to be first adjustment date, then use Schedule to compute the others
     # so i first compute dates list in each period, then compute the last date of each period
     # last day of that period(month) is the pos adjustment date
