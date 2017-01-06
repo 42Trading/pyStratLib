@@ -9,8 +9,8 @@ sys.path.append(os.path.sep.join(thisFilePath.split(os.path.sep)[:-2]))
 
 import unittest
 import pyStratLib.tests.analyzer as analyzer
-import pyStratLib.tests.maths as math
-import pyStratLib.tests.utils as util
+import pyStratLib.tests.maths as maths
+import pyStratLib.tests.utils as utils
 
 
 def test():
@@ -19,11 +19,11 @@ def test():
 
     tests = unittest.TestLoader().loadTestsFromTestCase(analyzer.TestCleanData)
     suite.addTests(tests)
-    tests = unittest.TestLoader().loadTestsFromTestCase(math.TestMatrix)
+    tests = unittest.TestLoader().loadTestsFromTestCase(maths.TestMatrix)
     suite.addTests(tests)
-    tests = unittest.TestLoader().loadTestsFromTestCase(math.TestStats)
+    tests = unittest.TestLoader().loadTestsFromTestCase(maths.TestStats)
     suite.addTests(tests)
-    tests = unittest.TestLoader().loadTestsFromTestCase(util.TestDateUtils)
+    tests = unittest.TestLoader().loadTestsFromTestCase(utils.TestDateUtils)
     suite.addTests(tests)
 
     res = unittest.TextTestRunner(verbosity=3).run(suite)
