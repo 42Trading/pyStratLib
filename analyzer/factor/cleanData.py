@@ -60,8 +60,8 @@ def getUniverseSingleFactor(path, IndexName=['tradeDate', 'secID']):
 def adjustFactorDate(factorRaw, startDate, endDate, freq='m'):
     """
     :param factorRaw: pd.DataFrame, multiindex =['tradeDate','secID']
-    :param startDate: str, start date of factor data
-    :param endDate: str, end date of factor data
+    :param startDate: str/datetime, start date of factor data
+    :param endDate: str/datetime, end date of factor data
     :param freq: str, optional, tiaocang frequency
     :return: pd.Series, multiindex =[datetime, secid] / pd.DataFrame
     此函数的主要目的是 把原始以报告日为对应日期的因子数据 改成 调仓日为日期（读取对应报告日数据）
