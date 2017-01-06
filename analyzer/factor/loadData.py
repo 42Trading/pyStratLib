@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
 import cleanData
-from PyFin.DateUtilities import Date
 from utils import dateutils
 
 _factorPathDict = {
@@ -22,6 +21,13 @@ _factorPathDict = {
 
 
 def getDataDiv(saveCSVPath, numerator='NAV', denominator='CAP', freq='m'):
+    """
+    :param saveCSVPath: str, save path and name of divide result
+    :param numerator: str, optional, name of the numerator factor
+    :param denominator: str, optional, name of the denominator factor
+    :param freq: str, optional, the frequency of the data
+    :return: DataFrame, the divide result
+    """
     numeratorData = cleanData.getUniverseSingleFactor(_factorPathDict[numerator][0])
     denominatorData = cleanData.getUniverseSingleFactor(_factorPathDict[denominator][0])
 
@@ -29,8 +35,8 @@ def getDataDiv(saveCSVPath, numerator='NAV', denominator='CAP', freq='m'):
         numeratorDataAdj = numeratorData
     else:
         numeratorDataAdj = cleanData.adjustFactorDate(numeratorData,
-                                                      str(Date.fromDateTime(numeratorData.index.levels[0][0])),
-                                                      str(Date.fromDateTime(numeratorData.index.levels[0][-1])),
+                                                      numeratorData.index.levels[0][0],
+                                                      numeratorData.index.levels[0][-1],
                                                       freq)
         numeratorDataAdj.index.names = ['tradeDate', 'secID']
 
@@ -38,8 +44,8 @@ def getDataDiv(saveCSVPath, numerator='NAV', denominator='CAP', freq='m'):
         denominatorDataAdj = denominatorData
     else:
         denominatorDataAdj = cleanData.adjustFactorDate(denominatorData,
-                                                        str(Date.fromDateTime(denominatorData.index.levels[0][0])),
-                                                        str(Date.fromDateTime(denominatorData.index.levels[0][-1])),
+                                                        denominatorData.index.levels[0][0],
+                                                        denominatorData.index.levels[0][-1],
                                                         freq)
         denominatorDataAdj.index.names = ['tradeDate', 'secID']
 
