@@ -1,5 +1,5 @@
 # coding=utf-8
-import datetime as dt
+import datetime
 from PyFin.DateUtilities import Calendar
 from PyFin.DateUtilities import Date
 from PyFin.DateUtilities import Period
@@ -17,16 +17,19 @@ _freqDict = {'d': TimeUnits.Days,
 
 def getPosAdjDate(startDate, endDate, format="%Y-%m-%d", calendar='China.SSE', freq='m'):
     """
-    :param startDate: str, start date of strategy
-    :param endDate: str, end date of strategy
+    :param startDate: str/datetime, start date of strategy
+    :param endDate: str/datetime, end date of strategy
     :param format: optional, format of the string date
     :param calendar: str, optional, name of the calendar to use in dates math
     :param freq: str, optional, the frequency of data
-    :return: list of str, pos adjust dates
+    :return: list of datetime, pos adjust dates
     """
-
-    dStartDate = Date.strptime(startDate, format)
-    dEndDate = Date.strptime(endDate, format)
+    if isinstance(startDate, str) and isinstance(endDate, str):
+        dStartDate = Date.strptime(startDate, format)
+        dEndDate = Date.strptime(endDate, format)
+    elif isinstance(startDate, datetime.datetime) and isinstance(endDate, datetime.datetime):
+        dStartDate = Date.fromDateTime(startDate)
+        dEndDate = Date.fromDateTime(endDate)
 
     cal = Calendar(calendar)
     posAdjustDate = Schedule(dStartDate,
@@ -38,14 +41,15 @@ def getPosAdjDate(startDate, endDate, format="%Y-%m-%d", calendar='China.SSE', f
     # so i first compute dates list in each period, then compute the last date of each period
     # last day of that period(month) is the pos adjustment date
     if _freqDict[freq] == TimeUnits.Weeks:
-        strPosAdjustDate = [str(Date.nextWeekday(date, Weekdays.Friday)) for date in posAdjustDate[:-1]]
+        PosAdjustDate = [Date.toDateTime(Date.nextWeekday(date, Weekdays.Friday)) for date in posAdjustDate[:-1]]
     elif _freqDict[freq] == TimeUnits.Months:
-        strPosAdjustDate = [str(cal.endOfMonth(date)) for date in posAdjustDate[:-1]]
+        PosAdjustDate = [Date.toDateTime(cal.endOfMonth(date)) for date in posAdjustDate[:-1]]
     elif _freqDict[freq] == TimeUnits.Years:
-        strPosAdjustDate = [str(Date(date.year(), 12, 31)) for date in posAdjustDate[:-1]]
+        PosAdjustDate = [Date.toDateTime(Date(date.year(), 12, 31)) for date in posAdjustDate[:-1]]
 
-    return strPosAdjustDate
+    return PosAdjustDate
 
 
 if __name__ == "__main__":
     print getPosAdjDate('2013-5-20', '2016-12-20', freq='y')
+    print getPosAdjDate(datetime.datetime(2013, 5, 20), datetime.datetime(2016, 12, 20), freq='y')
