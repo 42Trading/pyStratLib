@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
 import pandas as pd
-
+import numpy
 from PyFin.DateUtilities import Date
 from utils import dateutils
 
@@ -91,17 +91,18 @@ def getMultiIndexData(multiIdxData, firstIdxName, firstIdxVal, secIdxName=None, 
     """
     :param multiIdxData: pd.Series, multi-index =[firstIdxName, secIdxName]
     :param firstIdxName: str, first index name of multiIndex series
-    :param firstIdxVal: str/list, selected value of first index
+    :param firstIdxVal: str/list/datetime, selected value of first index
     :param secIdxName: str, second index name of multiIndex series
-    :param secIdxVal: str/list, selected valuer of second index
+    :param secIdxVal: str/list/datetime, selected valuer of second index
     :return: pd.Series, selected value with multi-index = [firstIdxName, secIdxName]
     """
 
-    if isinstance(firstIdxVal, basestring):
+    if isinstance(firstIdxVal, basestring) or isinstance(firstIdxVal, datetime.datetime):
         firstIdxVal = [firstIdxVal]
+
     data = multiIdxData.loc[multiIdxData.index.get_level_values(firstIdxName).isin(firstIdxVal)]
     if secIdxName is not None:
-        if isinstance(secIdxVal, basestring):
+        if isinstance(secIdxVal, basestring) or isinstance(secIdxVal, datetime.datetime):
             secIdxVal = [secIdxVal]
         data = data.loc[data.index.get_level_values(secIdxName).isin(secIdxVal)]
     return data

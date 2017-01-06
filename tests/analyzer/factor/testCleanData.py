@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import datetime
 import unittest
 import pandas as pd
 from analyzer.factor.cleanData import adjustFactorDate
@@ -10,21 +11,27 @@ class TestCleanData(unittest.TestCase):
     def testGetReportDate(self):
         actDate = ['2015-01-01', '2015-03-30', '2015-06-20', '2016-09-01', '2016-12-05']
         calculated = [getReportDate(date) for date in actDate]
-        expected = ['2014-09-30', '2014-09-30', '2015-03-31', '2016-06-30', '2016-09-30']
+        expected = [datetime.datetime(2014, 9, 30), datetime.datetime(2014, 9, 30), datetime.datetime(2015, 3, 31),
+                    datetime.datetime(2016, 6, 30), datetime.datetime(2016, 9, 30)]
         for i in range(len(expected)):
             self.assertEqual(calculated[i], expected[i], "Expected report date of {0} is not equal to expected {1}"
                              .format(actDate[i], expected[i]))
 
     def testAdjustFactorDate(self):
         factorRaw = pd.Series([1.0, 2.0, 3.0, 4.0, 5.0], name='factor', index=pd.MultiIndex.from_arrays(
-            [['2015-03-31', '2015-03-31', '2015-12-31', '2016-06-30', '2016-09-30'],
+            [[datetime.datetime(2015, 3, 31), datetime.datetime(2015, 3, 31), datetime.datetime(2015, 12, 31),
+              datetime.datetime(2016, 6, 30), datetime.datetime(2016, 9, 30)],
              ['000691.SZ', '002118.SZ', '000691.SZ', '600312.SH', '300518.SZ']], names=['tradeDate', 'secID']))
 
         calculated = adjustFactorDate(factorRaw, '2015-01-01', '2016-09-30', freq='m')
         expected = pd.Series([1.0, 2.0, 1.0, 2.0, 1.0, 2.0, 1.0, 2.0, 4.0, 4.0], name='factor',
                              index=pd.MultiIndex.from_arrays(
-                                 [['2015-04-30', '2015-04-30', '2015-05-29', '2015-05-29', '2015-06-30',
-                                   '2015-06-30', '2015-07-31', '2015-07-31', '2016-08-31', '2016-09-30'],
+                                 [[datetime.datetime(2015, 4, 30), datetime.datetime(2015, 4, 30),
+                                   datetime.datetime(2015, 5, 29), datetime.datetime(2015, 5, 29),
+                                   datetime.datetime(2015, 6, 30),
+                                   datetime.datetime(2015, 6, 30), datetime.datetime(2015, 7, 31),
+                                   datetime.datetime(2015, 7, 31), datetime.datetime(2016, 8, 31),
+                                   datetime.datetime(2016, 9, 30)],
                                   ['000691.SZ', '002118.SZ', '000691.SZ', '002118.SZ', '000691.SZ',
                                    '002118.SZ', '000691.SZ', '002118.SZ', '600312.SH', '600312.SH']],
                                  names=['tiaoCangDate', 'secID']))
@@ -33,8 +40,11 @@ class TestCleanData(unittest.TestCase):
         calculated = adjustFactorDate(factorRaw, '2015-01-01', '2016-01-30', freq='m')
         expected = pd.Series([1.0, 2.0, 1.0, 2.0, 1.0, 2.0, 1.0, 2.0], name='factor',
                              index=pd.MultiIndex.from_arrays(
-                                 [['2015-04-30', '2015-04-30', '2015-05-29', '2015-05-29', '2015-06-30',
-                                   '2015-06-30', '2015-07-31', '2015-07-31'],
+                                 [[datetime.datetime(2015, 4, 30), datetime.datetime(2015, 4, 30),
+                                   datetime.datetime(2015, 5, 29), datetime.datetime(2015, 5, 29),
+                                   datetime.datetime(2015, 6, 30),
+                                   datetime.datetime(2015, 6, 30), datetime.datetime(2015, 7, 31),
+                                   datetime.datetime(2015, 7, 31)],
                                   ['000691.SZ', '002118.SZ', '000691.SZ', '002118.SZ', '000691.SZ',
                                    '002118.SZ', '000691.SZ', '002118.SZ']],
                                  names=['tiaoCangDate', 'secID']))
@@ -44,9 +54,15 @@ class TestCleanData(unittest.TestCase):
         expected = pd.Series([1.0, 2.0, 1.0, 2.0, 1.0, 2.0, 1.0, 2.0, 1.0, 2.0, 1.0, 2.0, 1.0, 2.0, 1.0, 2.0, 1.0, 2.0],
                              name='factor',
                              index=pd.MultiIndex.from_arrays(
-                                 [['2015-05-01', '2015-05-01', '2015-05-08', '2015-05-08', '2015-05-15', '2015-05-15',
-                                   '2015-05-22', '2015-05-22', '2015-05-29', '2015-05-29', '2015-06-05', '2015-06-05',
-                                   '2015-06-12', '2015-06-12', '2015-06-19', '2015-06-19', '2015-06-26', '2015-06-26'],
+                                 [[datetime.datetime(2015, 5, 1), datetime.datetime(2015, 5, 1),
+                                   datetime.datetime(2015, 5, 8), datetime.datetime(2015, 5, 8),
+                                   datetime.datetime(2015, 5, 15), datetime.datetime(2015, 5, 15),
+                                   datetime.datetime(2015, 5, 22), datetime.datetime(2015, 5, 22),
+                                   datetime.datetime(2015, 5, 29), datetime.datetime(2015, 5, 29),
+                                   datetime.datetime(2015, 6, 5), datetime.datetime(2015, 6, 5),
+                                   datetime.datetime(2015, 6, 12), datetime.datetime(2015, 6, 12),
+                                   datetime.datetime(2015, 6, 19), datetime.datetime(2015, 6, 19),
+                                   datetime.datetime(2015, 6, 26), datetime.datetime(2015, 6, 26)],
                                   ['000691.SZ', '002118.SZ', '000691.SZ', '002118.SZ', '000691.SZ', '002118.SZ',
                                    '000691.SZ', '002118.SZ', '000691.SZ', '002118.SZ', '000691.SZ', '002118.SZ',
                                    '000691.SZ', '002118.SZ', '000691.SZ', '002118.SZ', '000691.SZ', '002118.SZ']],
@@ -54,38 +70,43 @@ class TestCleanData(unittest.TestCase):
         pd.util.testing.assert_series_equal(calculated, expected)
 
         calculated = adjustFactorDate(factorRaw, '2015-05-01', '2016-06-30', freq='y')
-        expected = pd.Series([5.0], name='factor', index=pd.MultiIndex.from_arrays([['2016-12-31'], ['300518.SZ']],
-                                                                                   names=['tiaoCangDate', 'secID']))
+        expected = pd.Series([5.0], name='factor',
+                             index=pd.MultiIndex.from_arrays([[datetime.datetime(2016, 12, 31)], ['300518.SZ']],
+                                                             names=['tiaoCangDate', 'secID']))
         pd.util.testing.assert_series_equal(calculated, expected)
 
     def testGetMultiIndexData(self):
         index = pd.MultiIndex.from_arrays(
-            [['2015-01-01', '2015-01-02', '2015-01-02', '2015-02-04', '2015-02-04'], ['A', 'B', 'C', 'A', 'C']],
+            [[datetime.datetime(2015, 1, 1), datetime.datetime(2015, 1, 2), datetime.datetime(2015, 1, 2),
+              datetime.datetime(2015, 2, 4), datetime.datetime(2015, 2, 4)], ['A', 'B', 'C', 'A', 'C']],
             names=['date', 'category'])
         multi = pd.Series([1.0, 2.0, 3.0, 4.0, 3.0], index=index)
 
-        calculated = getMultiIndexData(multi, 'date', '2015-01-02')
+        calculated = getMultiIndexData(multi, 'date', datetime.datetime(2015, 1, 2))
         expected = pd.Series([2.0, 3.0], index=pd.MultiIndex.from_arrays(
-            [['2015-01-02', '2015-01-02'], ['B', 'C']],
+            [[datetime.datetime(2015, 1, 2), datetime.datetime(2015, 1, 2)], ['B', 'C']],
             names=['date', 'category']))
         pd.util.testing.assert_series_equal(calculated, expected)
 
-        calculated = getMultiIndexData(multi, 'date', ['2015-01-02'])
+        calculated = getMultiIndexData(multi, 'date', [datetime.datetime(2015, 1, 2)])
         pd.util.testing.assert_series_equal(calculated, expected)
 
-        calculated = getMultiIndexData(multi, 'date', '2015-01-02', 'category', 'B')
-        expected = pd.Series([2.0], index=pd.MultiIndex.from_tuples([('2015-01-02', 'B')],
+        calculated = getMultiIndexData(multi, 'date', datetime.datetime(2015, 1, 2), 'category', 'B')
+        expected = pd.Series([2.0], index=pd.MultiIndex.from_tuples([(datetime.datetime(2015, 1, 2), 'B')],
                                                                     names=['date', 'category']))
         pd.util.testing.assert_series_equal(calculated, expected)
 
-        calculated = getMultiIndexData(multi, 'date', ['2015-01-02', '2015-02-04'], 'category', 'C')
+        calculated = getMultiIndexData(multi, 'date', [datetime.datetime(2015, 1, 2), datetime.datetime(2015, 2, 4)],
+                                       'category', 'C')
         expected = pd.Series([3.0, 3.0], index=pd.MultiIndex.from_product(
-            [['2015-01-02', '2015-02-04'], ['C']],
+            [[datetime.datetime(2015, 1, 2), datetime.datetime(2015, 2, 4)], ['C']],
             names=['date', 'category']))
         pd.util.testing.assert_series_equal(calculated, expected)
 
-        calculated = getMultiIndexData(multi, 'date', ['2015-01-02', '2015-02-04'], 'category', ['B', 'C'])
+        calculated = getMultiIndexData(multi, 'date', [datetime.datetime(2015, 1, 2), datetime.datetime(2015, 2, 4)],
+                                       'category', ['B', 'C'])
         expected = pd.Series([2.0, 3.0, 3.0], index=pd.MultiIndex.from_arrays(
-            [['2015-01-02', '2015-01-02', '2015-02-04'], ['B', 'C', 'C']],
+            [[datetime.datetime(2015, 1, 2), datetime.datetime(2015, 1, 2), datetime.datetime(2015, 2, 4)],
+             ['B', 'C', 'C']],
             names=['date', 'category']))
         pd.util.testing.assert_series_equal(calculated, expected)
