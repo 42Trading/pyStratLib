@@ -2,7 +2,7 @@
 import datetime
 import unittest
 
-from utils.dateutils import getPosAdjDate
+from pyStratLib.utils.dateutils import getPosAdjDate
 
 
 class TestDateUtils(unittest.TestCase):

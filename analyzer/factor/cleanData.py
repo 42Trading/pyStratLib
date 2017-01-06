@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import datetime
 import pandas as pd
-import numpy
 from PyFin.DateUtilities import Date
-from utils import dateutils
+from pyStratLib.utils import dateutils
 
 
 def getReportDate(actDate):

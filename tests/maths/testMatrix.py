@@ -2,8 +2,8 @@
 
 import unittest
 import numpy as np
-from maths.matrix import eigValPct
-from maths.matrix import pcaDecomp
+from pyStratLib.maths.matrix import eigValPct
+from pyStratLib.maths.matrix import pcaDecomp
 
 
 class TestMatrix(unittest.TestCase):

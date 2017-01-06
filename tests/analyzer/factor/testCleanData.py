@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 import datetime
 import unittest
-
 import pandas as pd
-
-from analyzer.factor.cleanData import adjustFactorDate
-from analyzer.factor.cleanData import getMultiIndexData
-from analyzer.factor.cleanData import getReportDate
+from pyStratLib.analyzer.factor.cleanData import adjustFactorDate
+from pyStratLib.analyzer.factor.cleanData import getMultiIndexData
+from pyStratLib.analyzer.factor.cleanData import getReportDate
 
 
 class TestCleanData(unittest.TestCase):
