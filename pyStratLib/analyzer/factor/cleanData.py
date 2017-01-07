@@ -96,12 +96,12 @@ def getMultiIndexData(multiIdxData, firstIdxName, firstIdxVal, secIdxName=None, 
     :return: pd.Series, selected value with multi-index = [firstIdxName, secIdxName]
     """
 
-    if isinstance(firstIdxVal, basestring) or isinstance(firstIdxVal, datetime.datetime):
+    if isinstance(firstIdxVal, basestring) or isinstance(firstIdxVal, datetime.date):
         firstIdxVal = [firstIdxVal]
 
     data = multiIdxData.loc[multiIdxData.index.get_level_values(firstIdxName).isin(firstIdxVal)]
     if secIdxName is not None:
-        if isinstance(secIdxVal, basestring) or isinstance(secIdxVal, datetime.datetime):
+        if isinstance(secIdxVal, basestring) or isinstance(secIdxVal, datetime.date):
             secIdxVal = [secIdxVal]
         data = data.loc[data.index.get_level_values(secIdxName).isin(secIdxVal)]
     return data
