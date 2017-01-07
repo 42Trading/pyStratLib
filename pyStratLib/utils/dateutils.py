@@ -17,8 +17,8 @@ _freqDict = {'d': TimeUnits.Days,
 
 def getPosAdjDate(startDate, endDate, format="%Y-%m-%d", calendar='China.SSE', freq='m'):
     """
-    :param startDate: str/datetime, start date of strategy
-    :param endDate: str/datetime, end date of strategy
+    :param startDate: str/datetime.date, start date of strategy
+    :param endDate: str/datetime.date, end date of strategy
     :param format: optional, format of the string date
     :param calendar: str, optional, name of the calendar to use in dates math
     :param freq: str, optional, the frequency of data
@@ -27,7 +27,7 @@ def getPosAdjDate(startDate, endDate, format="%Y-%m-%d", calendar='China.SSE', f
     if isinstance(startDate, str) and isinstance(endDate, str):
         dStartDate = Date.strptime(startDate, format)
         dEndDate = Date.strptime(endDate, format)
-    elif isinstance(startDate, datetime.datetime) and isinstance(endDate, datetime.datetime):
+    elif isinstance(startDate, datetime.date) and isinstance(endDate, datetime.date):
         dStartDate = Date.fromDateTime(startDate)
         dEndDate = Date.fromDateTime(endDate)
 
