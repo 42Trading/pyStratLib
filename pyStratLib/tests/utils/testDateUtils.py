@@ -14,7 +14,7 @@ class TestDateUtils(unittest.TestCase):
                     datetime.date(2016, 3, 31), datetime.date(2016, 4, 29), datetime.date(2016, 5, 31)]
         self.assertListEqual(calculated, expected, "Calculated Position Adjustment Date is wrong")
 
-        calculated = getPosAdjDate(datetime.datetime(2015, 6, 1), datetime.datetime(2016, 6, 1), format="%Y-%m-%d",
+        calculated = getPosAdjDate(datetime.date(2015, 6, 1), datetime.date(2016, 6, 1), format="%Y-%m-%d",
                                    calendar='China.SSE', freq='m')
         expected = [datetime.date(2015, 6, 30), datetime.date(2015, 7, 31), datetime.date(2015, 8, 31),
                     datetime.date(2015, 9, 30), datetime.date(2015, 10, 30), datetime.date(2015, 11, 30),
@@ -29,7 +29,7 @@ class TestDateUtils(unittest.TestCase):
                     datetime.date(2016, 3, 31), datetime.date(2016, 4, 29), datetime.date(2016, 5, 31)]
         self.assertListEqual(calculated, expected, "Calculated Position Adjustment Date is wrong")
 
-        calculated = getPosAdjDate(datetime.datetime(2015, 6, 1), datetime.datetime(2016, 6, 1), format="%Y/%m/%d",
+        calculated = getPosAdjDate(datetime.date(2015, 6, 1), datetime.date(2016, 6, 1), format="%Y/%m/%d",
                                    calendar='China.SSE', freq='m')
         expected = [datetime.date(2015, 6, 30), datetime.date(2015, 7, 31), datetime.date(2015, 8, 31),
                     datetime.date(2015, 9, 30), datetime.date(2015, 10, 30), datetime.date(2015, 11, 30),
@@ -44,7 +44,7 @@ class TestDateUtils(unittest.TestCase):
                     datetime.date(2016, 3, 31), datetime.date(2016, 4, 29), datetime.date(2016, 5, 31)]
         self.assertListEqual(calculated, expected, "Calculated Position Adjustment Date is wrong")
 
-        calculated = getPosAdjDate(datetime.datetime(2015, 6, 1), datetime.datetime(2016, 6, 1))
+        calculated = getPosAdjDate(datetime.date(2015, 6, 1), datetime.date(2016, 6, 1))
         expected = [datetime.date(2015, 6, 30), datetime.date(2015, 7, 31), datetime.date(2015, 8, 31),
                     datetime.date(2015, 9, 30), datetime.date(2015, 10, 30), datetime.date(2015, 11, 30),
                     datetime.date(2015, 12, 31), datetime.date(2016, 1, 29), datetime.date(2016, 2, 29),
@@ -72,7 +72,7 @@ class TestDateUtils(unittest.TestCase):
                     datetime.date(2016, 5, 27), datetime.date(2016, 6, 3)]
         self.assertListEqual(calculated, expected, "Calculated Position Adjustment Date is wrong")
 
-        calculated = getPosAdjDate(datetime.datetime(2015, 6, 1), datetime.datetime(2016, 6, 1), format="%Y-%m-%d",
+        calculated = getPosAdjDate(datetime.date(2015, 6, 1), datetime.date(2016, 6, 1), format="%Y-%m-%d",
                                    calendar='China.SSE', freq='w')
         expected = [datetime.date(2015, 6, 5), datetime.date(2015, 6, 12), datetime.date(2015, 6, 19),
                     datetime.date(2015, 6, 26), datetime.date(2015, 7, 3), datetime.date(2015, 7, 10),
@@ -162,7 +162,7 @@ class TestDateUtils(unittest.TestCase):
                     datetime.date(2016, 4, 30), datetime.date(2016, 5, 31)]
         self.assertListEqual(calculated, expected, "Calculated Position Adjustment Date is wrong")
 
-        calculated = getPosAdjDate(datetime.datetime(2015, 6, 1), datetime.datetime(2016, 6, 1), format="%Y-%m-%d",
+        calculated = getPosAdjDate(datetime.date(2015, 6, 1), datetime.date(2016, 6, 1), format="%Y-%m-%d",
                                    calendar='NullCalendar', freq='m')
         expected = [datetime.date(2015, 6, 30), datetime.date(2015, 7, 31), datetime.date(2015, 8, 31),
                     datetime.date(2015, 9, 30), datetime.date(2015, 10, 31), datetime.date(2015, 11, 30),
