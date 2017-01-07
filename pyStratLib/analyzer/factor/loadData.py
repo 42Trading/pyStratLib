@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
-import cleanData
-from utils import dateutils
+from pyStratLib.analyzer.factor import cleanData
+from pyStratLib.utils import dateutils
 
 _factorPathDict = {
     'BPS': ['..//..//data//factor//BPS.csv', 'q'],  # 每股净资产,季度频率,
