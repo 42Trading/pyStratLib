@@ -80,6 +80,11 @@ class DCAMAnalyzer(object):
         return low, high
 
     def getAnalysis(self, layerFactor):
+        """
+        :param layerFactor: pd.Series, layer factor series
+        :return:  对给定情景因子分层后的股票组合进行的统计分析
+        """
+        # TODO check if this works after low/high changes typs
         low, high = self.calcRankIC(layerFactor)
         result = pd.DataFrame(columns=self.__alphaFactorNames, index=np.arange(12))
         for i in self.__alphaFactorNames:
@@ -108,12 +113,12 @@ class DCAMAnalyzer(object):
         :param percentile: 个股在分层因子下的分位数
         :return: float, 个股的分层因子上的属性量化分数
         """
-        if percentile>= 85:
+        if percentile >= 85:
             return 9
         elif 50 <= percentile < 85:
-            return 9*(percentile/35.0 - 50.0/35.0)**0.7
+            return 9 * (percentile/35.0 - 50.0/35.0) ** 0.7
         elif 15 <= percentile < 50:
-            return -9*(percentile/35.0 - 50.0/35.0)**0.7
+            return -9 * (percentile/35.0 - 50.0/35.0) ** 0.7
         else:
             return -9
 
@@ -148,12 +153,34 @@ class DCAMAnalyzer(object):
         给定调仓日，计算secIDs的alpha因子的排位
         """
         alphaFactor = self.getAlphaFactor(secIDs, date)
+        # TODO replace with quantile function
         alphaFactorRank = alphaFactor.rank()
         ret = pd.DataFrame(alphaFactorRank, index=secIDs, columns=self.__alphaFactorNames)
         return ret
 
+    def calcSecScoreOnDate(self, secIDs, date):
+        """
+        :param secIDs: list, a group of sec ids
+        :param date: datetime, tiaoCangDate
+        :return: pd.Series, index = secID, cols = score
+        给定调仓日,
+        """
+        alphaWightLow, alphaWeightHigh = self.calcAlphaFactorWeightOnDate(date)
+        alphaFactorRank = self.calcAlphaFactorRank(secIDs, date)
+        alphaFactorRank = alphaFactorRank.to_dict()
+        secScore = {}
+        # TODO 
 
 
+        return
+
+    def selectTopRankSecIDs(self, date, nbSecIDsSelected=50):
+        """
+        :param date:
+        :param nbSecIDsSelected:
+        :return:
+        """
+        return
 
 if __name__ == "__main__":
     factor = FactorLoader('2015-10-05', '2015-12-31', ['CAP', 'ROE','RETURN'])
