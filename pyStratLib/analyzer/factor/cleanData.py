@@ -2,10 +2,12 @@
 import datetime
 import pandas as pd
 from PyFin.DateUtilities import Date
+from PyFin.DateUtilities import Calendar
+from PyFin.Enums import BizDayConventions
 from pyStratLib.utils import dateutils
 
 
-def getReportDate(actDate):
+def getReportDate(actDate, returnBizDay=True):
     """
     :param actDate: str/datetime, 任意日期
     :return: datetime, 对应应使用的报告日期， 从wind数据库中爬取
@@ -15,7 +17,7 @@ def getReportDate(actDate):
 
     if isinstance(actDate, str):
         actDate = Date.strptime(actDate)
-    elif isinstance(actDate, datetime.date):
+    elif isinstance(actDate, datetime.datetime):
         actDate = Date.fromDateTime(actDate)
     actMonth = actDate.month()
     actYear = actDate.year()
@@ -35,11 +37,14 @@ def getReportDate(actDate):
         year = actYear  # 第四季度使用当年三季报
         month = 9
         day = 30
-    ret = datetime.datetime(year, month, day)
+    if returnBizDay:
+        dateAdj = Calendar('China.SSE').adjustDate(Date(year, month, day), BizDayConventions.Preceding)
+        ret = datetime.datetime(dateAdj.year(), dateAdj.month(), dateAdj.day())
+    else:
+        ret = datetime.datetime(year, month, day)
     return ret
 
-
-def getUniverseSingleFactor(path, IndexName=['tradeDate', 'secID']):
+def getUniverseSingleFactor(path, IndexName=['tradeDate', 'secID'], returnBizDay=True):
     """
     :param path: str, path of csv file, col =[datetime, secid, factor]
     :param IndexName: multi index name to be set
@@ -70,7 +75,7 @@ def adjustFactorDate(factorRaw, startDate, endDate, freq='m'):
 
     # 获取调仓日日期
     tiaocangDate = dateutils.getPosAdjDate(startDate, endDate, freq=freq)
-    reportDate = [getReportDate(date) for date in tiaocangDate]
+    reportDate = [getReportDate(date, returnBizDay=True) for date in tiaocangDate]
 
     for i in range(len(tiaocangDate)):
         query = factorRaw.loc[factorRaw.index.get_level_values('tradeDate') == reportDate[i]]
