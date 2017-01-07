@@ -111,7 +111,7 @@ class TestDateUtils(unittest.TestCase):
                     datetime.date(2016, 4, 29), datetime.date(2016, 5, 31)]
         self.assertListEqual(calculated, expected, "Calculated Position Adjustment Date is wrong")
 
-        calculated = getPosAdjDate(datetime.datetime(2015, 6, 1), datetime.datetime(2016, 6, 1), format="%Y-%m-%d",
+        calculated = getPosAdjDate(datetime.date(2015, 6, 1), datetime.date(2016, 6, 1), format="%Y-%m-%d",
                                    calendar='China.IB', freq='m')
         expected = [datetime.date(2015, 6, 30), datetime.date(2015, 7, 31), datetime.date(2015, 8, 31),
                     datetime.date(2015, 9, 30), datetime.date(2015, 10, 30), datetime.date(2015, 11, 30),
@@ -128,7 +128,7 @@ class TestDateUtils(unittest.TestCase):
                     datetime.date(2016, 4, 29), datetime.date(2016, 5, 31)]
         self.assertListEqual(calculated, expected, "Calculated Position Adjustment Date is wrong")
 
-        calculated = getPosAdjDate(datetime.datetime(2015, 6, 1), datetime.datetime(2016, 6, 1), format="%Y-%m-%d",
+        calculated = getPosAdjDate(datetime.date(2015, 6, 1), datetime.date(2016, 6, 1), format="%Y-%m-%d",
                                    calendar='Target', freq='m')
         expected = [datetime.date(2015, 6, 30), datetime.date(2015, 7, 31), datetime.date(2015, 8, 31),
                     datetime.date(2015, 9, 30), datetime.date(2015, 10, 30), datetime.date(2015, 11, 30),
@@ -145,7 +145,7 @@ class TestDateUtils(unittest.TestCase):
                     datetime.date(2016, 4, 30), datetime.date(2016, 5, 31)]
         self.assertListEqual(calculated, expected, "Calculated Position Adjustment Date is wrong")
 
-        calculated = getPosAdjDate(datetime.datetime(2015, 6, 1), datetime.datetime(2016, 6, 1), format="%Y-%m-%d",
+        calculated = getPosAdjDate(datetime.date(2015, 6, 1), datetime.date(2016, 6, 1), format="%Y-%m-%d",
                                    calendar='Null', freq='m')
         expected = [datetime.date(2015, 6, 30), datetime.date(2015, 7, 31), datetime.date(2015, 8, 31),
                     datetime.date(2015, 9, 30), datetime.date(2015, 10, 31), datetime.date(2015, 11, 30),
