@@ -4,8 +4,8 @@
 import numpy as np
 import pandas as pd
 import scipy.stats as st
-from loadData import FactorLoader
-from cleanData import getMultiIndexData
+from pyStratLib.analyzer.factor.loadData import FactorLoader
+from pyStratLib.analyzer.factor.cleanData import getMultiIndexData
 from PyFin.Utilities import pyFinAssert
 
 class DCAMAnalyzer(object):
@@ -20,8 +20,13 @@ class DCAMAnalyzer(object):
         self.__endDate = endDate
         self.__tiaoCangDateWindowSize = tiaoCangDateWindowSize
 
-    # 给定某一时间，按分层因子layerFactor把股票分为数量相同的两组（大小）
-    def getGroup(self, date, layerFactor):
+    def getSecGroup(self, date, layerFactor):
+        """
+        :param date: datetime, 调仓日
+        :param layerFactor: multi index pd.Series, 情景分层因子
+        :return: list
+        给定某一时间，按分层因子layerFactor把股票分为数量相同的两组（大/小）
+        """
         data = getMultiIndexData(layerFactor, 'tiaoCangDate', date)
         data.sort_values(ascending=True, inplace=True)     #按分层因子值从小到大排序
         secIDs = data.index.get_level_values('secID').tolist()
@@ -29,27 +34,32 @@ class DCAMAnalyzer(object):
         group_high = secIDs[np.round(len(data))/2:]
         return group_low, group_high
 
-    # 给定某一时间，和股票代码列表，返回收益序列
-    def getReturn(self, secIDs, date):
+    def getSecReturn(self, secIDs, date):
+        """
+        :param secIDs: list of sec ids
+        :param date: datetime, 调仓日
+        :return: pd.Series, index = sec ID
+        给定某一时间和股票代码列表, 返回前一个调仓日至当前调仓日的股票收益
+        """
         data = getMultiIndexData(self.__secReturn, 'tiaoCangDate', date, 'secID', secIDs)
+        data = data.reset_index().drop('tiaoCangDate', axis=1)
+        data = data.set_index('secID')
         return data
 
-    # 给定某一时间, 和股票代码列表, 返回因子列表
     def getAlphaFactor(self, secIDs, date):
-        ret = pd.Series()
+        """
+        :param secIDs: list of sec ids
+        :param date: datetime, 调仓日
+        :return: pd.DataFrame, index = secIDs, col = [alpha factor]
+        给定某一时间, 和股票代码列表, 返回alpha因子列表
+        """
+        ret = pd.DataFrame()
         for i in range(len(self.__alphaFactor)):
             data = getMultiIndexData(self.__alphaFactor[i], 'tiaoCangDate', date, 'secID', secIDs)
-            ret[data.name] = data
-        return ret
-
-    # 对收益数据和因子数据做一个concat,避免因子和收益数据长度不同
-    def alignData(self, returnData, factorData):
-        returnDataDf = pd.DataFrame(data=returnData.values, index=returnData.index.get_level_values('secID'), columns=[returnData.name])
-        factorDataDf = pd.DataFrame()
-        for i in factorData.index.values:
-            data = pd.DataFrame(data=factorData[i].values, index=factorData[i].index.get_level_values('secID'), columns=[i])
-            factorDataDf = pd.concat([data, factorDataDf], axis=1)
-        ret = pd.concat([returnDataDf, factorDataDf], axis=1).dropna()
+            data = data.reset_index().drop('tiaoCangDate', axis=1)
+            data = data.set_index('secID')
+            ret = pd.concat([ret, data], axis=1)
+        ret.columns = self.__alphaFactorNames
         return ret
 
     def calcRankIC(self, layerFactor):
@@ -64,27 +74,29 @@ class DCAMAnalyzer(object):
         for j in range(1, len(self.__tiaoCangDate)):   #对时间做循环，得到每个时间点的rankIC
             date = self.__tiaoCangDate[j]
             prevDate = self.__tiaoCangDate[j-1]
-            groupLow, groupHigh = self.getGroup(date, layerFactor)         #分组
-            returnLow = self.getReturn(groupLow, date)
-            returnHigh = self.getReturn(groupHigh, date)     #得到当期收益序列
+            groupLow, groupHigh = self.getSecGroup(date, layerFactor)         #分组
+            returnLow = self.getSecReturn(groupLow, date)
+            returnHigh = self.getSecReturn(groupHigh, date)     #得到当期收益序列
             factorLow = self.getAlphaFactor(groupLow, prevDate)
             factorHigh = self.getAlphaFactor(groupHigh, prevDate)      #得到上期因子序列
-            tableLow = self.alignData(returnLow, factorLow)
-            tableHigh = self.alignData(returnHigh, factorHigh)
+            tableLow = pd.concat([returnLow, factorLow], axis=1)
+            tableHigh = pd.concat([returnHigh, factorHigh], axis=1)
             for k in self.__alphaFactorNames:
                 tmplow, _ = st.spearmanr(tableLow['RETURN'], tableLow[k])
                 tmphigh, _ = st.spearmanr(tableHigh['RETURN'], tableHigh[k])
                 low[k][j] = tmplow
                 high[k][j] = tmphigh
-
+        low = low.dropna()
+        high = high.dropna()
         return low, high
 
-    def getAnalysis(self, layerFactor):
+    def getAnalysis(self, layerFactor=None):
         """
         :param layerFactor: pd.Series, layer factor series
         :return:  对给定情景因子分层后的股票组合进行的统计分析
         """
-        # TODO check if this works after low/high changes typs
+        if layerFactor is None:
+            layerFactor = self.__layerFactor[0]
         low, high = self.calcRankIC(layerFactor)
         result = pd.DataFrame(columns=self.__alphaFactorNames, index=np.arange(12))
         for i in self.__alphaFactorNames:
@@ -169,7 +181,7 @@ class DCAMAnalyzer(object):
         alphaFactorRank = self.calcAlphaFactorRank(secIDs, date)
         alphaFactorRank = alphaFactorRank.to_dict()
         secScore = {}
-        # TODO 
+        # TODO
 
 
         return
@@ -193,6 +205,7 @@ if __name__ == "__main__":
                             endDate='2015-12-31')
     #print analyzer.getReturn(['603997.SH','603998.SH'],'2015-12-31')
     #print analyzer.getFactor(['603997.SH','603998.SH'],'2015-12-31')
+    print analyzer.getAnalysis()
 
 
 
