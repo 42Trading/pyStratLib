@@ -17,7 +17,7 @@ def getReportDate(actDate, returnBizDay=True):
 
     if isinstance(actDate, str):
         actDate = Date.strptime(actDate)
-    elif isinstance(actDate, datetime.datetime):
+    elif isinstance(actDate, datetime.date):
         actDate = Date.fromDateTime(actDate)
     actMonth = actDate.month()
     actYear = actDate.year()
@@ -39,9 +39,9 @@ def getReportDate(actDate, returnBizDay=True):
         day = 30
     if returnBizDay:
         dateAdj = Calendar('China.SSE').adjustDate(Date(year, month, day), BizDayConventions.Preceding)
-        ret = datetime.datetime(dateAdj.year(), dateAdj.month(), dateAdj.day())
+        ret = dateAdj.toDateTime()
     else:
-        ret = datetime.datetime(year, month, day)
+        ret = datetime.date(year, month, day)
     return ret
 
 def getUniverseSingleFactor(path, IndexName=['tradeDate', 'secID'], returnBizDay=True):
@@ -56,7 +56,8 @@ def getUniverseSingleFactor(path, IndexName=['tradeDate', 'secID'], returnBizDay
     factor['tradeDate'] = pd.to_datetime(factor['tradeDate'], format='%Y%m%d')
     factor = factor.dropna()
     factor = factor[factor['secID'].str.contains(r'^[^<A>]+$$')]  # 去除类似AXXXX的代码(IPO终止)
-    index = pd.MultiIndex.from_arrays([factor['tradeDate'].values, factor['secID'].values], names=IndexName)
+    # factor['tradeDate'].dt.date 返回datetime.date 格式的日期数据
+    index = pd.MultiIndex.from_arrays([factor['tradeDate'].dt.date, factor['secID'].values], names=IndexName)
     ret = pd.Series(factor['factor'].values, index=index, name='factor')
     return ret
 
@@ -74,13 +75,13 @@ def adjustFactorDate(factorRaw, startDate, endDate, freq='m'):
     ret = pd.Series()
 
     # 获取调仓日日期
-    tiaocangDate = dateutils.getPosAdjDate(startDate, endDate, freq=freq)
-    reportDate = [getReportDate(date, returnBizDay=True) for date in tiaocangDate]
+    tiaoCangDate = dateutils.getPosAdjDate(startDate, endDate, freq=freq)
+    reportDate = [getReportDate(date, returnBizDay=True) for date in tiaoCangDate]
 
-    for i in range(len(tiaocangDate)):
+    for i in range(len(tiaoCangDate)):
         query = factorRaw.loc[factorRaw.index.get_level_values('tradeDate') == reportDate[i]]
         query = query.reset_index().drop('tradeDate', axis=1)
-        query['tiaoCangDate'] = [tiaocangDate[i]] * query['secID'].count()
+        query['tiaoCangDate'] = [tiaoCangDate[i]] * query['secID'].count()
         ret = pd.concat([ret, query], axis=0)
     ret = ret[['tiaoCangDate', 'secID', 'factor']]  # 清理列
 
@@ -95,9 +96,9 @@ def getMultiIndexData(multiIdxData, firstIdxName, firstIdxVal, secIdxName=None, 
     """
     :param multiIdxData: pd.Series, multi-index =[firstIdxName, secIdxName]
     :param firstIdxName: str, first index name of multiIndex series
-    :param firstIdxVal: str/list/datetime, selected value of first index
+    :param firstIdxVal: str/list/datetime.date, selected value of first index
     :param secIdxName: str, second index name of multiIndex series
-    :param secIdxVal: str/list/datetime, selected valuer of second index
+    :param secIdxVal: str/list/datetime.date, selected valuer of second index
     :return: pd.Series, selected value with multi-index = [firstIdxName, secIdxName]
     """
 

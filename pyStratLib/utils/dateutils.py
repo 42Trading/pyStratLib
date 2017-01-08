@@ -15,25 +15,20 @@ _freqDict = {'d': TimeUnits.Days,
              'y': TimeUnits.Years}
 
 
-def changeDateToDatetime(date, format='%Y-%m-%d'):
-    datetime.datetime.strptime(str(date), format)
-
-
 def mapToBizDayList(dateList, calendar='China.SSE', convention=BizDayConventions.Preceding):
     """
-    :param dateList: list of dates in datetime types
+    :param dateList: list of datetime.date
     :param calendar: str, optional, name of the calendar to use in dates math
     :param convention: str, optional, pyFin date conventions
     :return:
     用更快的方式计算, 避免对每个日期进行循环
     """
     uniqueDateList = list(set(dateList))
-    pyDateList = [Date(i.year, i.month, i.day) for i in uniqueDateList]
-    pyDateList = [Calendar(calendar).adjustDate(i, BizDayConventions.Preceding) for i in pyDateList]
-    bizDayList = [changeDateToDatetime(i.toDateTime()) for i in pyDateList]
-    mapDict = dict()
-    # TODO finish this function
-    ret = []
+    pyDateList = [Date.strptime(i) if isinstance(i, basestring) else i for i in uniqueDateList]
+    pyDateList = [Calendar(calendar).adjustDate(i, convention) for i in pyDateList]
+    bizDayList = [i.toDateTime() for i in pyDateList]
+    dictDateMap = dict(zip(uniqueDateList, bizDayList))
+    ret = [dictDateMap[i] for i in dateList]
     return ret
 
 
@@ -41,11 +36,11 @@ def mapToBizDayList(dateList, calendar='China.SSE', convention=BizDayConventions
 def getPosAdjDate(startDate, endDate, format="%Y-%m-%d", calendar='China.SSE', freq='m'):
     """
     :param startDate: str/datetime.date, start date of strategy
-    :param endDate: str/datetime.date, end date of strategy
+    :param endDate: str/datetime.date, end date of strat egy
     :param format: optional, format of the string date
     :param calendar: str, optional, name of the calendar to use in dates math
     :param freq: str, optional, the frequency of data
-    :return: list of datetime, pos adjust dates
+    :return: list of datetime.date, pos adjust dates
     """
     if isinstance(startDate, str) and isinstance(endDate, str):
         dStartDate = Date.strptime(startDate, format)
@@ -70,12 +65,11 @@ def getPosAdjDate(startDate, endDate, format="%Y-%m-%d", calendar='China.SSE', f
     elif _freqDict[freq] == TimeUnits.Years:
         PosAdjustDate = [Date.toDateTime(Date(date.year(), 12, 31)) for date in posAdjustDate[:-1]]
 
-    # PyFin returns datetime.date type, but datetime.datetime type makes life easier
-    PosAdjustDate = [changeDateToDatetime(date) for date in PosAdjustDate]
-
     return PosAdjustDate
 
 
 if __name__ == "__main__":
     print getPosAdjDate('2013-5-20', '2016-12-20', freq='y')
-    print getPosAdjDate(datetime.datetime(2013, 5, 20), datetime.datetime(2016, 12, 20), freq='y')
+    print getPosAdjDate(datetime.date(2013, 5, 20), datetime.date(2016, 12, 20), freq='y')
+    print mapToBizDayList(['2015-01-31', '2015-02-28'])
+
