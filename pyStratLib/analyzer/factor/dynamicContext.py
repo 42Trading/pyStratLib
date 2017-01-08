@@ -9,7 +9,7 @@ from pyStratLib.analyzer.factor.cleanData import getMultiIndexData
 from PyFin.Utilities import pyFinAssert
 
 class DCAMAnalyzer(object):
-    def __init__(self, layerFactor, alphaFactor, secReturn, tiaoCangDate, startDate='', endDate='', tiaoCangDateWindowSize=12):
+    def __init__(self, layerFactor, alphaFactor, secReturn, tiaoCangDate, startDate='', endDate='', tiaoCangDateWindowSize=5):
         self.__layerFactor = layerFactor
         self.__layerFactorNames = [layerFactor.name for layerFactor in self.__layerFactor]
         self.__alphaFactor = alphaFactor
@@ -19,6 +19,10 @@ class DCAMAnalyzer(object):
         self.__startDate = startDate
         self.__endDate = endDate
         self.__tiaoCangDateWindowSize = tiaoCangDateWindowSize
+        pyFinAssert(len(self.__tiaoCangDate) > self.__tiaoCangDateWindowSize,
+                    ValueError,
+                    "length of tiaoCangDate must be larger than moving window size")
+
 
     def getSecGroup(self, date, layerFactor):
         """
@@ -134,22 +138,24 @@ class DCAMAnalyzer(object):
         else:
             return -9
 
-    def calcAlphaFactorWeightOnDate(self, date):
+    def calcAlphaFactorWeightOnDate(self, date=None):
         """
         :param: date, datetime, tiaoCangDate
         :return:  pd.DataFrame,  index = [layerFactor], cols= [alpha factor name]
         给定调仓日，计算alpha因子的加权矩阵
         """
-        tiaoCangDateIndex = self.__tiaoCangDate.index(date) + 1
-        pyFinAssert(tiaoCangDateIndex >= self.__tiaoCangDateWindowSize, ValueError, "first weight calc date must be later than moving window last date")
+        if date is None:
+            date = self.__tiaoCangDate[self.__tiaoCangDateWindowSize]
+        tiaoCangDateRange = self.__tiaoCangDate[self.__tiaoCangDate.index(date) - self.__tiaoCangDateWindowSize
+                                                : self.__tiaoCangDate.index(date)]
 
-        retLow = pd.DataFrame(columns=[self.__alphaFactorNames])
-        retHigh = pd.DataFrame(columns=[self.__alphaFactorNames])
+        retLow = pd.DataFrame(columns=self.__alphaFactorNames)
+        retHigh = pd.DataFrame(columns=self.__alphaFactorNames)
 
         for layerFactor in self.__layerFactor:
             low, high = self.calcRankIC(layerFactor)
-            lowToUse = low.iloc[tiaoCangDateIndex - self.__tiaoCangDateWindowSize:tiaoCangDateIndex]
-            highToUse = high.iloc[tiaoCangDateIndex - self.__tiaoCangDateWindowSize:tiaoCangDateIndex]
+            lowToUse = low.loc[tiaoCangDateRange]
+            highToUse = high.loc[tiaoCangDateRange]
             weightLow = lowToUse.mean(axis=0) / lowToUse.std(axis=0)
             weightHigh = highToUse.mean(axis=0) / highToUse.std(axis=0)
             retLow = pd.concat([retLow, pd.DataFrame(weightLow, index=layerFactor, columns=[self.__alphaFactorNames])], axis=1)
@@ -195,17 +201,18 @@ class DCAMAnalyzer(object):
         return
 
 if __name__ == "__main__":
-    factor = FactorLoader('2015-10-05', '2015-12-31', ['CAP', 'ROE','RETURN'])
+    factor = FactorLoader('2015-01-05', '2015-12-31', ['CAP', 'ROE','RETURN'])
     factorData = factor.getFactorData()
     analyzer = DCAMAnalyzer([factorData['CAP']],
                             [factorData['ROE']],
                             factorData['RETURN'],
                             factor.getTiaoCangDate(),
-                            startDate='2015-10-05',
+                            startDate='2015-01-05',
                             endDate='2015-12-31')
     #print analyzer.getReturn(['603997.SH','603998.SH'],'2015-12-31')
     #print analyzer.getFactor(['603997.SH','603998.SH'],'2015-12-31')
-    print analyzer.getAnalysis()
+    #print analyzer.getAnalysis()
+    print analyzer.calcAlphaFactorWeightOnDate()
 
 
 
