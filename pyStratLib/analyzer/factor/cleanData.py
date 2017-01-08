@@ -9,7 +9,7 @@ from pyStratLib.utils import dateutils
 
 def getReportDate(actDate, returnBizDay=True):
     """
-    :param actDate: str/datetime, 任意日期
+    :param actDate: str/datetime.datetime, 任意日期
     :return: datetime, 对应应使用的报告日期， 从wind数据库中爬取
     此函数的目的是要找到，任意时刻可使用最新的季报数据的日期，比如2-20日可使用的最新季报是去年的三季报（对应日期为9-30），
 
@@ -41,7 +41,7 @@ def getReportDate(actDate, returnBizDay=True):
         dateAdj = Calendar('China.SSE').adjustDate(Date(year, month, day), BizDayConventions.Preceding)
         ret = dateAdj.toDateTime()
     else:
-        ret = datetime.date(year, month, day)
+        ret = datetime.datetime(year, month, day)
     return ret
 
 def getUniverseSingleFactor(path, IndexName=['tradeDate', 'secID'], returnBizDay=True):
@@ -56,8 +56,9 @@ def getUniverseSingleFactor(path, IndexName=['tradeDate', 'secID'], returnBizDay
     factor['tradeDate'] = pd.to_datetime(factor['tradeDate'], format='%Y%m%d')
     factor = factor.dropna()
     factor = factor[factor['secID'].str.contains(r'^[^<A>]+$$')]  # 去除类似AXXXX的代码(IPO终止)
-    # factor['tradeDate'].dt.date 返回datetime.date 格式的日期数据
-    index = pd.MultiIndex.from_arrays([factor['tradeDate'].dt.date, factor['secID'].values], names=IndexName)
+    if returnBizDay:
+        bizDay = dateutils.mapToBizDay(factor['tradeDate'])
+    index = pd.MultiIndex.from_arrays([bizDay.values, factor['secID'].values], names=IndexName)
     ret = pd.Series(factor['factor'].values, index=index, name='factor')
     return ret
 
@@ -65,8 +66,8 @@ def getUniverseSingleFactor(path, IndexName=['tradeDate', 'secID'], returnBizDay
 def adjustFactorDate(factorRaw, startDate, endDate, freq='m'):
     """
     :param factorRaw: pd.DataFrame, multiindex =['tradeDate','secID']
-    :param startDate: str/datetime, start date of factor data
-    :param endDate: str/datetime, end date of factor data
+    :param startDate: str/datetime.datetime, start date of factor data
+    :param endDate: str/datetime.datetime, end date of factor data
     :param freq: str, optional, tiaocang frequency
     :return: pd.Series, multiindex =[datetime, secid] / pd.DataFrame
     此函数的主要目的是 把原始以报告日为对应日期的因子数据 改成 调仓日为日期（读取对应报告日数据）
@@ -102,7 +103,7 @@ def getMultiIndexData(multiIdxData, firstIdxName, firstIdxVal, secIdxName=None, 
     :return: pd.Series, selected value with multi-index = [firstIdxName, secIdxName]
     """
 
-    if isinstance(firstIdxVal, basestring) or isinstance(firstIdxVal, datetime.date):
+    if isinstance(firstIdxVal, basestring) or isinstance(firstIdxVal, datetime.datetime):
         firstIdxVal = [firstIdxVal]
 
     data = multiIdxData.loc[multiIdxData.index.get_level_values(firstIdxName).isin(firstIdxVal)]

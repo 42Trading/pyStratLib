@@ -2,6 +2,7 @@
 import pandas as pd
 from pyStratLib.analyzer.factor import cleanData
 from pyStratLib.utils import dateutils
+from PyFin.DateUtilities import Date
 
 _factorPathDict = {
     'BPS': ['..//..//data//factor//BPS.csv', 'q'],  # 每股净资产,季度频率,
