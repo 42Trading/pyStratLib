@@ -27,10 +27,11 @@ class TestCleanData(unittest.TestCase):
                              .format(actDate[i], expected[i]))
 
     def testAdjustFactorDate(self):
+
         factorRaw = pd.Series([1.0, 2.0, 3.0, 4.0, 5.0], name='factor', index=pd.MultiIndex.from_arrays(
             [[datetime.datetime(2015, 3, 31), datetime.datetime(2015, 3, 31), datetime.datetime(2015, 12, 31),
               datetime.datetime(2016, 6, 30), datetime.datetime(2016, 9, 30)],
-             ['000691.SZ', '002118.SZ', '000691.SZ', '600312.SH', '300518.SZ']], names=['tradeDate', 'secID']))
+                ['000691.SZ', '002118.SZ', '000691.SZ', '600312.SH', '300518.SZ']], names=['tradeDate', 'secID']))
 
         calculated = adjustFactorDate(factorRaw, '2015-01-01', '2016-09-30', freq='m')
         expected = pd.Series([1.0, 2.0, 1.0, 2.0, 1.0, 2.0, 1.0, 2.0, 4.0, 4.0], name='factor',
