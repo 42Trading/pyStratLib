@@ -1,11 +1,2 @@
-# pyStratLib
-Research and Strategies Lib 
-
-
-Dependency:
-- Finance-Python, version 0.4.3
-  link: https://github.com/wegamekinglc/Finance-Python
-  c/c++ compiler is required for installation
-- numpy, version 1.11.1
-- pandas, version 0.18.1
-- alphalens, version 0.0.0, https://github.com/quantopian/alphalens/
+<pre># pyStratLib<br />Research and Strategies Lib <br /><br /><br />Dependency:<br />- Finance-Python, version 0.4.3<br />
+link: <a href="https://github.com/wegamekinglc/Finance-Python" target="_blank">https://github.com/wegamekinglc/Finance-Python</a><br />  c/c++ compiler is required for installation<br />- numpy, version 1.11.1<br />- pandas, version 0.18.1<br />- alphalens, version 0.0.0</pre>
