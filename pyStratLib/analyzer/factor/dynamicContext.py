@@ -24,7 +24,7 @@ class DCAMAnalyzer(object):
                     "length of tiaoCangDate must be larger than moving window size")
 
 
-    def getSecGroup(self, date, layerFactor):
+    def getSecGroup(self, layerFactor, date):
         """
         :param date: datetime, 调仓日
         :param layerFactor: multi index pd.Series, 情景分层因子
@@ -32,9 +32,11 @@ class DCAMAnalyzer(object):
         给定某一时间，按分层因子layerFactor把股票分为数量相同的两组（大/小）
         """
         data = getMultiIndexData(layerFactor, 'tiaoCangDate', date)
-        data.sort_values(ascending=True, inplace=True)     #按分层因子值从小到大排序
+        # 按分层因子值从小到大排序
+        data.sort_values(ascending=True, inplace=True)
         secIDs = data.index.get_level_values('secID').tolist()
-        group_low = secIDs[:np.round(len(data))/2]        #分组,因子值小的哪一组股票为low,高的为high
+        # 分组,因子值小的哪一组股票为low,高的为high
+        group_low = secIDs[:np.round(len(data))/2]
         group_high = secIDs[np.round(len(data))/2:]
         return group_low, group_high
 
@@ -78,7 +80,7 @@ class DCAMAnalyzer(object):
         for j in range(1, len(self.__tiaoCangDate)):   #对时间做循环，得到每个时间点的rankIC
             date = self.__tiaoCangDate[j]
             prevDate = self.__tiaoCangDate[j-1]
-            groupLow, groupHigh = self.getSecGroup(date, layerFactor)         #分组
+            groupLow, groupHigh = self.getSecGroup(layerFactor, date)         #分组
             returnLow = self.getSecReturn(groupLow, date)
             returnHigh = self.getSecReturn(groupHigh, date)     #得到当期收益序列
             factorLow = self.getAlphaFactor(groupLow, prevDate)
@@ -138,14 +140,28 @@ class DCAMAnalyzer(object):
         else:
             return -9
 
-    def calcAlphaFactorWeightOnDate(self, date=None):
+    def getLayerFactorQuantileOnDate(self, date):
+        """
+        :param date: datetime, 调仓日
+        :param layerFactor: multi index pd.Series, 情景分层因子
+        :return: pd.DataFrame, index=secid, col = layerFactorNames
+        """
+        ret = pd.DataFrame()
+        for layerFactor in self.__layerFactor:
+            data = getMultiIndexData(layerFactor, 'tiaoCangDate', date)
+            secIDs = data.index.get_level_values('secID').tolist()
+            # 由高至低排序
+            rank = data.rank(ascending=False)
+            rank = rank.divide(len(secIDs))
+            ret = pd.concat([ret, pd.Series(rank.values, index=secIDs)], axis=1, names=layerFactor.name)
+        return ret
+
+    def calcAlphaFactorWeightOnDate(self, date):
         """
         :param: date, datetime, tiaoCangDate
         :return:  pd.DataFrame,  index = [layerFactor], cols= [alpha factor name]
         给定调仓日，计算alpha因子的加权矩阵
         """
-        if date is None:
-            date = self.__tiaoCangDate[self.__tiaoCangDateWindowSize]
         tiaoCangDateRange = self.__tiaoCangDate[self.__tiaoCangDate.index(date) - self.__tiaoCangDateWindowSize
                                                 : self.__tiaoCangDate.index(date)]
 
@@ -158,47 +174,80 @@ class DCAMAnalyzer(object):
             highToUse = high.loc[tiaoCangDateRange]
             weightLow = lowToUse.mean(axis=0) / lowToUse.std(axis=0)
             weightHigh = highToUse.mean(axis=0) / highToUse.std(axis=0)
-            retLow = pd.concat([retLow, pd.DataFrame(weightLow, index=layerFactor, columns=[self.__alphaFactorNames])], axis=1)
-            retHigh = pd.concat([retHigh, pd.DataFrame(weightHigh, index=layerFactor, columns=[self.__alphaFactorNames])], axis=1)
+            retLow = pd.concat([retLow, pd.DataFrame(weightLow.values, index=[layerFactor.name], columns=self.__alphaFactorNames)], axis=0)
+            retHigh = pd.concat([retHigh, pd.DataFrame(weightHigh.values, index=[layerFactor.name], columns=self.__alphaFactorNames)], axis=0)
 
         return retLow, retHigh
 
-    def calcAlphaFactorRank(self, secIDs, date):
+    def calcAlphaFactorRankOnDate(self, date=None):
         """
         :param secIDs, list, a group of sec ids
         :param date, datetime, tiaoCangDate
-        :return:  pd.DataFrame,  index = secID, cols= [alpha factor name]
+        :return:  pd.DataFrame,  index = [layerFactor, secID, low/high], index = layerfactor, col = alpha factor
         给定调仓日，计算secIDs的alpha因子的排位
         """
-        alphaFactor = self.getAlphaFactor(secIDs, date)
-        # TODO replace with quantile function
-        alphaFactorRank = alphaFactor.rank()
-        ret = pd.DataFrame(alphaFactorRank, index=secIDs, columns=self.__alphaFactorNames)
+        if date is None:
+            date = self.__tiaoCangDate[self.__tiaoCangDateWindowSize]
+
+        ret = pd.DataFrame()
+        for layerFactor in self.__layerFactor:
+            # 分层因子下股票分为两组
+            groupLow, groupHigh = self.getSecGroup(layerFactor, date)
+            factorLow = self.getAlphaFactor(groupLow, date)
+            factorHigh = self.getAlphaFactor(groupHigh, date)
+            # 由高到低排序
+            factorLowRank = factorLow.rank(ascending=False, axis=0)
+            factorHighRank = factorHigh.rank(ascending=False, axis=0)
+            # multi index DataFrame
+            secIDIndex = groupLow + groupHigh
+            layerFactorIndex = [layerFactor.name] * len(secIDIndex)
+            highLowIndex = ['low']*len(groupLow)+['high']*len(groupHigh)
+            factorRankArray = pd.concat([factorLowRank, factorHighRank], axis=0).values
+            index = pd.MultiIndex.from_arrays([secIDIndex, layerFactorIndex, highLowIndex], names=['secID', 'layerFactor', 'lowHigh'])
+            alphaFactorRank = pd.DataFrame(factorRankArray, index=index, columns=self.__alphaFactorNames)
+            # merge
+            ret = pd.concat([ret, alphaFactorRank], axis=0)
+
         return ret
 
-    def calcSecScoreOnDate(self, secIDs, date):
+    def calcSecScoreOnDate(self, date=None):
         """
         :param secIDs: list, a group of sec ids
         :param date: datetime, tiaoCangDate
         :return: pd.Series, index = secID, cols = score
         给定调仓日,
         """
+        if date is None:
+            date = self.__tiaoCangDate[self.__tiaoCangDateWindowSize]
+
+        ret = pd.Series()
         alphaWightLow, alphaWeightHigh = self.calcAlphaFactorWeightOnDate(date)
-        alphaFactorRank = self.calcAlphaFactorRank(secIDs, date)
-        alphaFactorRank = alphaFactorRank.to_dict()
-        secScore = {}
-        # TODO
-
-
-        return
+        alphaFactorRank = self.calcAlphaFactorRankOnDate(date)
+        layerFactorWeight = self.getLayerFactorQuantileOnDate(date)
+        secIDs = layerFactorWeight.index.tolist()
+        for secID in secIDs:
+            # 提取secID对应的alphaFactorRank DataFrame, index = [layerFactor, high/low], col = alphaFactor
+            factorRankMatrix = getMultiIndexData(alphaFactorRank, 'secID', secID)
+            weightedRank = 0.0
+            for layerFactor in factorRankMatrix.index.get_level_values('layerFactor'):
+                factorRankOnLayerFactor = factorRankMatrix.loc[factorRankMatrix.index.get_level_values('layerFactor')==layerFactor]
+                rank = factorRankOnLayerFactor.values
+                lowHigh = factorRankOnLayerFactor.index.get_level_values('lowHigh')
+                weight = alphaWightLow.loc[layerFactor].values if lowHigh == 'low' else alphaWeightHigh.loc[layerFactor].values
+                weightedRank += np.dot(weight, rank) * layerFactorWeight[secID]
+            ret[secID] = weightedRank
+        return ret
 
     def selectTopRankSecIDs(self, date, nbSecIDsSelected=50):
         """
-        :param date:
-        :param nbSecIDsSelected:
-        :return:
+        :param date: datetime, tiaoCangDate
+        :param nbSecIDsSelected: int, optional,
+        :return: list 返回股票代码列表
         """
-        return
+        secScore = self.calcSecScoreOnDate(date)
+        secScore.sort_values(ascending=False, inplace=True)
+        secID = secScore.index.tolist()[:nbSecIDsSelected]
+        return secID
 
 if __name__ == "__main__":
     factor = FactorLoader('2015-01-05', '2015-12-31', ['CAP', 'ROE','RETURN'])
@@ -212,7 +261,7 @@ if __name__ == "__main__":
     #print analyzer.getReturn(['603997.SH','603998.SH'],'2015-12-31')
     #print analyzer.getFactor(['603997.SH','603998.SH'],'2015-12-31')
     #print analyzer.getAnalysis()
-    print analyzer.calcAlphaFactorWeightOnDate()
+    print analyzer.calcAlphaFactorRankOnDate()
 
 
 
