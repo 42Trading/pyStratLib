@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
-from pyStratLib.analyzer.factor import cleanData
-from pyStratLib.utils import dateutils
-from PyFin.DateUtilities import Date
+from pyStratLib.analyzer.factor.cleanData import getUniverseSingleFactor
+from pyStratLib.analyzer.factor.cleanData import adjustFactorDate
+from pyStratLib.utils.dateutils import getPosAdjDate
+
 
 _factorPathDict = {
     'BPS': ['..//..//data//factor//BPS.csv', 'q'],  # 每股净资产,季度频率,
@@ -29,26 +30,26 @@ def getDataDiv(saveCSVPath, numerator='NAV', denominator='CAP', freq='m'):
     :param freq: str, optional, the frequency of the data
     :return: DataFrame, the divide result
     """
-    numeratorData = cleanData.getUniverseSingleFactor(_factorPathDict[numerator][0])
-    denominatorData = cleanData.getUniverseSingleFactor(_factorPathDict[denominator][0])
+    def getNewFactorSeries(data, freq):
+        ret = adjustFactorDate(data,
+                                          data.index.levels[0][0],
+                                          data.index.levels[0][-1],
+                                          freq)
+        ret.index.names = ['tradeDate', 'secID']
+        return ret
+
+    numeratorData = getUniverseSingleFactor(_factorPathDict[numerator][0])
+    denominatorData = getUniverseSingleFactor(_factorPathDict[denominator][0])
 
     if _factorPathDict[numerator][1] == freq:
         numeratorDataAdj = numeratorData
     else:
-        numeratorDataAdj = cleanData.adjustFactorDate(numeratorData,
-                                                      numeratorData.index.levels[0][0],
-                                                      numeratorData.index.levels[0][-1],
-                                                      freq)
-        numeratorDataAdj.index.names = ['tradeDate', 'secID']
+        numeratorDataAdj = getNewFactorSeries(numeratorData, freq)
 
     if _factorPathDict[denominator][1] == freq:
         denominatorDataAdj = denominatorData
     else:
-        denominatorDataAdj = cleanData.adjustFactorDate(denominatorData,
-                                                        denominatorData.index.levels[0][0],
-                                                        denominatorData.index.levels[0][-1],
-                                                        freq)
-        denominatorDataAdj.index.names = ['tradeDate', 'secID']
+        denominatorDataAdj = getNewFactorSeries(denominatorData, freq)
 
     ret = numeratorDataAdj.divide(denominatorDataAdj, axis='index')
     ret.to_csv(saveCSVPath)
@@ -65,7 +66,7 @@ class FactorLoader(object):
         self.__nbFactor = len(factorNames)
 
     def getTiaoCangDate(self):
-        return dateutils.getPosAdjDate(self.__startDate, self.__endDate, freq=self.__freq)
+        return getPosAdjDate(self.__startDate, self.__endDate, freq=self.__freq)
 
     def getFactorData(self):
         ret = pd.Series()
@@ -73,10 +74,10 @@ class FactorLoader(object):
             pathToUse = _factorPathDict[name][0]
             originalFreq = _factorPathDict[name][1]
             if originalFreq <> self.__freq:
-                factorRaw = cleanData.getUniverseSingleFactor(pathToUse)
-                factor = cleanData.adjustFactorDate(factorRaw, self.__startDate, self.__endDate, self.__freq)
+                factorRaw = getUniverseSingleFactor(pathToUse)
+                factor = adjustFactorDate(factorRaw, self.__startDate, self.__endDate, self.__freq)
             else:
-                factorRaw = cleanData.getUniverseSingleFactor(pathToUse, IndexName=['tiaoCangDate', 'secID'])
+                factorRaw = getUniverseSingleFactor(pathToUse, IndexName=['tiaoCangDate', 'secID'])
                 factorRaw = factorRaw.loc[factorRaw.index.get_level_values('tiaoCangDate') >= self.__startDate]
                 factor = factorRaw.loc[factorRaw.index.get_level_values('tiaoCangDate') <= self.__endDate]
             factor.name = name
