@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import os
+import zipfile
 import pandas as pd
 from pyStratLib.analyzer.factor.cleanData import getUniverseSingleFactor
 from pyStratLib.analyzer.factor.cleanData import adjustFactorDate
@@ -49,13 +51,42 @@ def getDataDiv(saveCSVPath, numerator='NAV', denominator='CAP', freq='m'):
 
 
 class FactorLoader(object):
-    def __init__(self, startDate, endDate, factorNames, freq='m'):
+    def __init__(self, startDate, endDate, factorNames, freq='m', zipPath="..//..//data"):
         self.__startDate = startDate
         self.__endDate = endDate
         self.__factorNames = factorNames
         self.__freq = freq
         self.__tiaocangDate = []
         self.__nbFactor = len(factorNames)
+        self.__zipPath = zipPath
+        # unzip factor data file when first time use
+        self._unzipCsvFiles(self.__zipPath)
+        
+    def _unzipCsvFiles(self, zipPath):
+        """
+        :param zipPath: str, 因子数据压缩包路径
+        :return:
+        解压缩因子数据压缩包，压缩包中尚未解压到目标文件夹中的文件将被解压
+        """
+        zipFile = zipfile.ZipFile(os.path.join(zipPath, "data.zip"), "r")
+        for name in zipFile.namelist():
+            name = name.replace('\\', '/')
+            # 检查文件夹是否存在,新建尚未存在的文件夹
+            if name.endswith("/"):
+                extDir = os.path.join(zipPath, name)
+                if not os.path.exists(extDir):
+                    os.mkdir(extDir)
+            # 检查数据文件是否存在，新建尚未存在的数据文件
+            else:
+                extFilename = os.path.join(zipPath, name)
+                extDir = os.path.dirname(extFilename)
+                if not os.path.exists(extDir):
+                    os.mkdir(extDir)
+                if not os.path.exists(extFilename):
+                    outfile = open(extFilename, 'wb')
+                    outfile.write(zipFile.read(name))
+                    outfile.close()
+        return
 
     def getTiaoCangDate(self):
         return getPosAdjDate(self.__startDate, self.__endDate, freq=self.__freq)
