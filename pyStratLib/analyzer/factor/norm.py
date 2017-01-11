@@ -49,9 +49,10 @@ def standardize(factors):
 
 
 
-def getIndustryMatrix(industry):
+def getIndustryMatrix(industry, mktCap=None):
     """
     :param industry: pd.Series, index = secID, value = 行业名称
+    :param mktCap: pd.Series, index = secID, value = 市值
     :return: numpy.matrix, 行业虚拟矩阵，see alphaNote
     """
     secIDs = industry.index.tolist()
@@ -62,6 +63,11 @@ def getIndustryMatrix(industry):
     for i in range(len(secIDs)):
         colIndex = np.where(uniqueIndustry == industry[i])[0]
         ret[i][colIndex] = 1.0
+
+    if mktCap is not None:
+        arrayCap = mktCap.values.reshape(mktCap.values.shape[0],1)
+        # 合并两个矩阵构成大矩阵
+        ret = np.hstack((ret, arrayCap))
 
     return ret
 
@@ -76,22 +82,25 @@ def neutralize(factors, industry, cap=None):
     pyFinAssert(factors.size == industry.size, ValueError,
                 "factor size {0} does not equal to industry size {1}".format(factors.size, industry.size))
     linreg = LinearRegression(fit_intercept=False)
+    Y = factors
     if cap is None:
         X = getIndustryMatrix(industry)
-        Y = factors
-        model = linreg.fit(X, Y)
-
     else:
         pyFinAssert(industry.size == cap.size, ValueError,
                 "industry size {0} does not equal to cap size {1}".format(industry.size, cap.size))
         lcap = np.log(cap)
-        #TODO fill out this section
+        X = getIndustryMatrix(industry, lcap)
 
-    ret = pd.Series(linreg.residues_, index=factors.index)
+    model = linreg.fit(X, Y)
+    coef = np.mat(linreg.coef_)
+    a = np.dot(X, coef.T)
+    residues = Y.values - a.A1
+    ret = pd.Series(residues, index=factors.index)
     return ret
 
 
 if __name__ == "__main__":
-    factors = pd.Series([5.0,5.0,10.0], index=['000001.SZ','000002.SZ','000003.SZ'])
-    industry = pd.Series(['801190.SI', '801190.SI','801200.SI'], index=['000001.SZ','000002.SZ','000003.SZ'])
-    print neutralize(factors, industry)
+    factors = pd.Series([5.0,5.0,3.0,10.0], index=['000001.SZ','000002.SZ','000003.SZ','000004.SZ'])
+    cap = pd.Series([50.0,100.0,20.0, 20.0], index=['000001.SZ','000002.SZ','000003.SZ','000004.SZ'])
+    industry = pd.Series(['801190.SI', '801190.SI','801200.SI','801200.SI'], index=['000001.SZ','000002.SZ','000003.SZ','000003.SZ'])
+    print neutralize(factors, industry, cap)
