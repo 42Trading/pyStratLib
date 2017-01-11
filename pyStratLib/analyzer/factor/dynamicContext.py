@@ -7,17 +7,18 @@ import scipy.stats as st
 from pyStratLib.analyzer.factor.loadData import FactorLoader
 from pyStratLib.analyzer.factor.cleanData import getMultiIndexData
 from PyFin.Utilities import pyFinAssert
+from PyFin.DateUtilities import Date
 
 class DCAMAnalyzer(object):
-    def __init__(self, layerFactor, alphaFactor, secReturn, tiaoCangDate, startDate='', endDate='', tiaoCangDateWindowSize=5):
+    def __init__(self, layerFactor, alphaFactor, secReturn, tiaoCangDate, tiaoCangDateWindowSize=12):
         self.__layerFactor = layerFactor
         self.__layerFactorNames = [layerFactor.name for layerFactor in self.__layerFactor]
         self.__alphaFactor = alphaFactor
         self.__alphaFactorNames = [alphaFactor.name for alphaFactor in self.__alphaFactor]
         self.__secReturn = secReturn
         self.__tiaoCangDate = tiaoCangDate
-        self.__startDate = startDate
-        self.__endDate = endDate
+        self.__startDate = str(Date.fromDateTime(self.__tiaoCangDate[0]))
+        self.__endDate = str(Date.fromDateTime(self.__tiaoCangDate[-1]))
         self.__tiaoCangDateWindowSize = tiaoCangDateWindowSize
         pyFinAssert(len(self.__tiaoCangDate) > self.__tiaoCangDateWindowSize,
                     ValueError,
@@ -162,6 +163,9 @@ class DCAMAnalyzer(object):
         :return:  pd.DataFrame,  index = [layerFactor], cols= [alpha factor name]
         给定调仓日，计算alpha因子的加权矩阵
         """
+        if isinstance(date, basestring):
+            date = Date.strptime(date).toDateTime()
+            
         tiaoCangDateRange = self.__tiaoCangDate[self.__tiaoCangDate.index(date) - self.__tiaoCangDateWindowSize
                                                 : self.__tiaoCangDate.index(date)]
 
@@ -174,19 +178,21 @@ class DCAMAnalyzer(object):
             highToUse = high.loc[tiaoCangDateRange]
             weightLow = lowToUse.mean(axis=0) / lowToUse.std(axis=0)
             weightHigh = highToUse.mean(axis=0) / highToUse.std(axis=0)
-            retLow = pd.concat([retLow, pd.DataFrame(weightLow.values, index=[layerFactor.name], columns=self.__alphaFactorNames)], axis=0)
-            retHigh = pd.concat([retHigh, pd.DataFrame(weightHigh.values, index=[layerFactor.name], columns=self.__alphaFactorNames)], axis=0)
+            retLow.loc[layerFactor.name] = weightLow.values
+            retHigh.loc[layerFactor.name] = weightHigh.values
 
         return retLow, retHigh
 
     def calcAlphaFactorRankOnDate(self, date):
         """
         :param secIDs, list, a group of sec ids
-        :param date, datetime, tiaoCangDate
+        :param date, str/datetime, tiaoCangDate
         :return:  pd.DataFrame,  index = [layerFactor, secID, low/high], index = layerfactor, col = alpha factor
         给定调仓日，计算secIDs的alpha因子的排位
         """
         ret = pd.DataFrame()
+        if isinstance(date, basestring):
+            date = Date.strptime(date).toDateTime()
         for layerFactor in self.__layerFactor:
             # 分层因子下股票分为两组
             groupLow, groupHigh = self.getSecGroup(layerFactor, date)
@@ -248,18 +254,17 @@ class DCAMAnalyzer(object):
         return secID
 
 if __name__ == "__main__":
-    factor = FactorLoader('2015-01-05', '2015-12-31', ['CAP', 'ROE','RETURN'])
+    factor = FactorLoader('2006-01-05', '2015-12-31', ['CAP', 'ROE','PRTYOY', 'TRN', 'RETURN'])
     factorData = factor.getFactorData()
     analyzer = DCAMAnalyzer([factorData['CAP']],
-                            [factorData['ROE']],
+                            [factorData['ROE'], factorData['PRTYOY'], factorData['TRN']],
                             factorData['RETURN'],
-                            factor.getTiaoCangDate(),
-                            startDate='2015-01-05',
-                            endDate='2015-12-31')
+                            factor.getTiaoCangDate())
     #print analyzer.getReturn(['603997.SH','603998.SH'],'2015-12-31')
     #print analyzer.getFactor(['603997.SH','603998.SH'],'2015-12-31')
     #print analyzer.getAnalysis()
-    print analyzer.selectTopRankSecIDs()
+    print analyzer.getAnalysis()
+    print analyzer.calcAlphaFactorWeightOnDate('2011-12-30')
 
 
 
