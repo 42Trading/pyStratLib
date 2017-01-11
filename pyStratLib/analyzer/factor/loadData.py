@@ -59,7 +59,7 @@ class FactorLoader(object):
         self.__tiaocangDate = []
         self.__nbFactor = len(factorNames)
         self.__zipPath = zipPath
-        # unzip factor data file when first time use
+        # 由于因子csv文件较大,所以默认存储为压缩格式的文件, 第一次使用时自动解压缩
         self._unzipCsvFiles(self.__zipPath)
         
     def _unzipCsvFiles(self, zipPath):
