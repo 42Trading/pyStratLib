@@ -8,11 +8,16 @@ from pyStratLib.utils.dateutils import getPosAdjDate
 
 
 _factorPathDict = {
-    'PRTYOY': ['..//..//data//factor//ProfitYoY.csv', 'q'],  # 净利润同比增长率,季度频率 - alpha因子
-    'TRN': ['..//..//data//factor//Turnover.csv', 'm'],  # 月度换手率,月度频率 - alpha因子
-    'ROE': ['..//..//data//factor//ROE.csv', 'q'],  # 净资产收益率,季度频率 -- 分层因子
-    'CAP': ['..//..//data//factor//MktCap.csv', 'm'],  # 总市值,月度频率 -- 分层因子
-    'RETURN': ['..//..//data//return//monthlyReturn.csv', 'm']  # 收益,月度频率
+    'PRTYOY': ['..//..//data//factor//ProfitYoY.csv', 'q'],  # 净利润同比增长率, 季度频率 - alpha因子
+    'TRN': ['..//..//data//factor//Turnover.csv', 'm'],  # 月度换手率, 月度频率 - alpha因子
+    'TTM':['..//..//data//factor//NetProfitTTM.csv', 'q'],  # 最近12个月净利润, 季度频率 -- alpha因子
+    'BP': ['..//..//data//factor//BP_LF.csv', 'q'], # 净资产除以总市值, 季度频率 -- 分层因子
+    'ROE': ['..//..//data//factor//ROE.csv', 'q'],  # 净资产收益率, 季度频率 -- 分层因子
+    'CAP': ['..//..//data//factor//MktCap.csv', 'm'],  # 总市值, 月度频率 -- 分层因子
+    'EQTYGROTHYOY':['..//..//data//factor//ProfitYoY.csv', 'q'],  # 净资产同比增长率, 季度频率 -- 分层因子
+    'ROEYOY': ['..//..//data//factor//RoeYoY.csv', 'q'],  # ROE同比增长率, 季度频率 -- alpha测试因子
+    'RETURN': ['..//..//data//return//monthlyReturn.csv', 'm'],  # 收益,月度频率
+    'INDUSTRY':['..//..//data//industry//codeSW.csv', 'm']  # 申万行业分类,月度频率
 }
 
 
@@ -109,7 +114,7 @@ class FactorLoader(object):
 
 
 if __name__ == "__main__":
-    # factor = FactorLoader('2015-01-05', '2015-12-30', ['NAV', 'ROE', 'RETURN'])
+    factor = FactorLoader('2015-01-05', '2015-12-30', ['NAV', 'ROE', 'RETURN'])
     # ret = factor.getFactorData()
     # print ret['RETURN']
-    print getDataDiv('BP.csv', 'NAV', 'CAP')
+    #print getDataDiv('BP.csv', 'NAV', 'CAP')
