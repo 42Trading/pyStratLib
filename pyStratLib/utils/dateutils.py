@@ -68,6 +68,7 @@ def getPosAdjDate(startDate, endDate, format="%Y-%m-%d", calendar='China.SSE', f
     elif _freqDict[freq] == TimeUnits.Years:
         PosAdjustDate = [Date.toDateTime(Date(date.year(), 12, 31)) for date in posAdjustDate[:-1]]
 
+    PosAdjustDate = [date for date in PosAdjustDate if date <= dEndDate.toDateTime()]
     return PosAdjustDate
 
 
