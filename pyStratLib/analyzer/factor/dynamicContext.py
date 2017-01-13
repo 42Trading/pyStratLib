@@ -8,6 +8,8 @@ from pyStratLib.analyzer.factor.loadData import FactorLoader
 from pyStratLib.analyzer.factor.cleanData import getMultiIndexData
 from PyFin.Utilities import pyFinAssert
 from PyFin.DateUtilities import Date
+from pyStratLib.enums.factorNorm import FactorNormType
+
 
 class DCAMAnalyzer(object):
     def __init__(self, layerFactor, alphaFactor, secReturn, tiaoCangDate, tiaoCangDateWindowSize=12):
@@ -78,14 +80,14 @@ class DCAMAnalyzer(object):
         low = pd.DataFrame(index=self.__tiaoCangDate, columns=[self.__alphaFactorNames])
         high = pd.DataFrame(index=self.__tiaoCangDate, columns=[self.__alphaFactorNames])
 
-        for j in range(1, len(self.__tiaoCangDate)):   #对时间做循环，得到每个时间点的rankIC
+        for j in range(0, len(self.__tiaoCangDate)-1):   #对时间做循环，得到每个时间点的rankIC
             date = self.__tiaoCangDate[j]
-            prevDate = self.__tiaoCangDate[j-1]
+            nextDate = self.__tiaoCangDate[j+1]
             groupLow, groupHigh = self.getSecGroup(layerFactor, date)         #分组
             returnLow = self.getSecReturn(groupLow, date)
             returnHigh = self.getSecReturn(groupHigh, date)     #得到当期收益序列
-            factorLow = self.getAlphaFactor(groupLow, prevDate)
-            factorHigh = self.getAlphaFactor(groupHigh, prevDate)      #得到上期因子序列
+            factorLow = self.getAlphaFactor(groupLow, nextDate)
+            factorHigh = self.getAlphaFactor(groupHigh, nextDate)      #得到上期因子序列
             tableLow = pd.concat([returnLow, factorLow], axis=1)
             tableHigh = pd.concat([returnHigh, factorHigh], axis=1)
             for k in self.__alphaFactorNames:
@@ -205,7 +207,7 @@ class DCAMAnalyzer(object):
             # multi index DataFrame
             secIDIndex = factorLowRank.index.union(factorHighRank.index)
             layerFactorIndex = [layerFactor.name] * len(secIDIndex)
-            highLowIndex = ['low']*len(factorLowRank.index)+['high']*len(factorHighRank.index)
+            highLowIndex = ['low']*len(factorLowRank.index) + ['high']*len(factorHighRank.index)
             factorRankArray = pd.concat([factorLowRank, factorHighRank], axis=0).values
             index = pd.MultiIndex.from_arrays([secIDIndex, layerFactorIndex, highLowIndex], names=['secID', 'layerFactor', 'lowHigh'])
             alphaFactorRank = pd.DataFrame(factorRankArray, index=index, columns=self.__alphaFactorNames)
@@ -254,17 +256,29 @@ class DCAMAnalyzer(object):
         return secID
 
 if __name__ == "__main__":
-    factor = FactorLoader('2006-01-05', '2015-12-31', ['CAP', 'ROE','PRTYOY', 'TRN', 'RETURN'])
+    factor = FactorLoader('2006-01-05', '2015-12-31',
+                          {'MV': FactorNormType.IndustryAndCapNeutral, # 分层因子
+                           'BP_LF': FactorNormType.IndustryAndCapNeutral, # 分层因子
+                           'EquityGrowth_YOY': FactorNormType.IndustryAndCapNeutral, # 分层因子
+                           'ROE': FactorNormType.IndustryAndCapNeutral,   # 分层因子
+                           'EP2_TTM': FactorNormType.IndustryAndCapNeutral, # alpha因子
+                           'SP_TTM': FactorNormType.IndustryAndCapNeutral, # alpha 因子
+                           'GP2Asset': FactorNormType.IndustryAndCapNeutral, # alpha因子
+                           'PEG': FactorNormType.IndustryAndCapNeutral, # alpha因子
+                           'ProfitGrowth_Qr_YOY': FactorNormType.IndustryAndCapNeutral, # alpha因子
+                           'TO_adj': FactorNormType.IndustryAndCapNeutral, # alpha因子
+                           'RETURN': FactorNormType.Null,
+                           'INDUSTRY': FactorNormType.Null
+                            })
     factorData = factor.getFactorData()
-    analyzer = DCAMAnalyzer([factorData['CAP']],
-                            [factorData['ROE'], factorData['PRTYOY'], factorData['TRN']],
+    analyzer = DCAMAnalyzer([factorData['MV']],
+                            [factorData['BP_LF'], factorData['GP2Asset'], factorData['PEG'],
+                             factorData['ProfitGrowth_Qr_YOY'], factorData['TO_adj']],
                             factorData['RETURN'],
                             factor.getTiaoCangDate())
-    #print analyzer.getReturn(['603997.SH','603998.SH'],'2015-12-31')
-    #print analyzer.getFactor(['603997.SH','603998.SH'],'2015-12-31')
-    #print analyzer.getAnalysis()
+
     print analyzer.getAnalysis()
-    print analyzer.calcAlphaFactorWeightOnDate('2011-12-30')
+    print analyzer.calcAlphaFactorWeightOnDate('2012-01-31')
 
 
 
