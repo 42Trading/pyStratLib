@@ -25,6 +25,7 @@ _factorPathDict = {
 
     'RETURN': ['..//..//data//return//monthlyReturn.csv', 'm'],  # 收益,月度频率
     'INDUSTRY': ['..//..//data//industry//codeSW.csv', 'm'],  # 申万行业分类,月度频率
+    'IND_WGT': ['..//..//data//industry//IndustryWeight.csv', 'm']  # 中证500股票池内按照申万一级行业分类统计的行业权重,月度频率
 }
 
 
