@@ -2,29 +2,29 @@
 import os
 import zipfile
 import pandas as pd
-from pyStratLib.analyzer.factor.cleanData import getUniverseSingleFactor
+from PyFin.Utilities import pyFinAssert
 from pyStratLib.analyzer.factor.cleanData import adjustFactorDate
 from pyStratLib.analyzer.factor.cleanData import getMultiIndexData
-from pyStratLib.utils.dateutils import getPosAdjDate
-from pyStratLib.enums.factorNorm import FactorNormType
+from pyStratLib.analyzer.factor.cleanData import getUniverseSingleFactor
 from pyStratLib.analyzer.factor.norm import normalize
-from PyFin.Utilities import pyFinAssert
+from pyStratLib.enums.factorNorm import FactorNormType
+from pyStratLib.utils.dateutils import getPosAdjDate
 
 _factorPathDict = {
-    'PRTYOY': ['..//..//data//factor//ProfitYoY.csv', 'q'],  # 净利润同比增长率, 季度频率 - alpha因子
-    'TRN': ['..//..//data//factor//Turnover.csv', 'm'],  # 月度换手率, 月度频率 - alpha因子
-    'TTM': ['..//..//data//factor//NetProfitTTM.csv', 'q'],  # 最近12个月净利润, 季度频率 -- alpha因子
-    'BP': ['..//..//data//factor//BP_LF.csv', 'q'],  # 净资产除以总市值, 季度频率 -- 分层因子
+    'MV': ['..//..//data//factor//MktCap.csv', 'm'],  # 总市值, 月度频率 -- 分层因子
+    'BP_LF': ['..//..//data//factor//BP_LF.csv', 'q'],  # 最近财报的净资产/总市值, 季度频率 -- 分层因子/alpha测试因子
+    'EquityGrowth_YOY': ['..//..//data//factor//ProfitYoY.csv', 'q'],  # 净资产同比增长率, 季度频率 -- 分层因子
     'ROE': ['..//..//data//factor//ROE.csv', 'q'],  # 净资产收益率, 季度频率 -- 分层因子
-    'CAP': ['..//..//data//factor//MktCap.csv', 'm'],  # 总市值, 月度频率 -- 分层因子
-    'EQTYGROTHYOY': ['..//..//data//factor//ProfitYoY.csv', 'q'],  # 净资产同比增长率, 季度频率 -- 分层因子
-    'ROEYOY': ['..//..//data//factor//RoeYoY.csv', 'q'],  # ROE同比增长率, 季度频率 -- alpha测试因子
+
+    'EP2_TTM': ['..//..//data//factor//EP2_TTM.csv', 'q'],  # 剔除非经常性损益的过去12 个月净利润/总市值, 季度频率 -- alpha测试因子
+    'SP_TTM': ['..//..//data//factor//SP_TTM.csv', 'q'],  # 过去12 个月总营业收入/总市值, 季度频率 -- alpha测试因子
+    'GP2Asset': ['..//..//data//factor//GP2Asset.csv', 'q'],  # 销售毛利润/总资产, 季度频率 -- alpha测试因子
+    'PEG': ['..//..//data//factor//PEG.csv', 'm'],  # 过去12 个月总营业收入/总市值, 月度频率 -- alpha测试因子
+    'ProfitGrowth_Qr_YOY': ['..//..//data//factor//ProfitYoY.csv', 'q'],  # 净利润增长率（季度同比）, 季度频率 - alpha测试因子
+    'TO_adj': ['..//..//data//factor//Turnover.csv', 'm'],  # 月度换手率, 月度频率 - alpha测试因子
+
     'RETURN': ['..//..//data//return//monthlyReturn.csv', 'm'],  # 收益,月度频率
     'INDUSTRY': ['..//..//data//industry//codeSW.csv', 'm'],  # 申万行业分类,月度频率
-    'EP2_TTM': ['..//..//data//factor//EP2_TTM.csv', 'q'],  # 剔除非经常性损益的过去12 个月净利润/总市值, 季度频率 -- alpha测试因子
-    'GP2Asset': ['..//..//data//factor//GP2Asset.csv', 'q'],  # 销售毛利润/总资产, 季度频率 -- alpha测试因子
-    'SP_TTM': ['..//..//data//factor//SP_TTM.csv', 'q'],  # 过去12 个月总营业收入/总市值, 季度频率 -- alpha测试因子
-    'PEG': ['..//..//data//factor//PEG.csv', 'm'],  # 过去12 个月总营业收入/总市值, 月度频率 -- alpha测试因子
 }
 
 
@@ -61,7 +61,6 @@ def getDataDiv(saveCSVPath, numerator='NAV', denominator='CAP', freq='m'):
     ret = numeratorDataAdj.divide(denominatorDataAdj, axis='index')
     ret.to_csv(saveCSVPath)
     return ret
-
 
 
 class FactorLoader(object):
@@ -153,14 +152,14 @@ class FactorLoader(object):
                             ValueError,
                             'Failed to neurtalize because of missing industry and cap data')
                 factorData[name] = self._normalizeSingleFactorData(factorData[name],
-                                                                industry=factorData['INDUSTRY'],
-                                                                cap=factorData['CAP'])
+                                                                   industry=factorData['INDUSTRY'],
+                                                                   cap=factorData['CAP'])
             elif self.__factorDict[name] == FactorNormType.IndustryNeutral:
                 pyFinAssert(('INDUSTRY' in self.__factorNames),
                             ValueError,
                             'Failed to neurtalize because of missing industry')
                 factorData[name] = self._normalizeSingleFactorData(factorData[name],
-                                                                industry=factorData['INDUSTRY'])
+                                                                   industry=factorData['INDUSTRY'])
 
         return factorData
 
@@ -174,4 +173,3 @@ if __name__ == "__main__":
                            'RETURN': FactorNormType.IndustryAndCapNeutral})
     ret = factor.getNormFactorData()
     print ret['RETURN']
-
