@@ -2,9 +2,13 @@
 import os
 import zipfile
 import pandas as pd
-from pyStratLib.analyzer.factor.cleanData import adjustFactorDate
 from pyStratLib.analyzer.factor.cleanData import getUniverseSingleFactor
+from pyStratLib.analyzer.factor.cleanData import adjustFactorDate
+from pyStratLib.analyzer.factor.cleanData import getMultiIndexData
 from pyStratLib.utils.dateutils import getPosAdjDate
+from pyStratLib.enums.factorNorm import FactorNormType
+from pyStratLib.analyzer.factor.norm import normalize
+from PyFin.Utilities import pyFinAssert
 
 _factorPathDict = {
     'PRTYOY': ['..//..//data//factor//ProfitYoY.csv', 'q'],  # 净利润同比增长率, 季度频率 - alpha因子
@@ -59,17 +63,26 @@ def getDataDiv(saveCSVPath, numerator='NAV', denominator='CAP', freq='m'):
     return ret
 
 
+
 class FactorLoader(object):
-    def __init__(self, startDate, endDate, factorNames, freq='m', zipPath="..//..//data"):
+    def __init__(self, startDate, endDate, factorDict, freq='m', zipPath="..//..//data"):
+        """
+        :param startDate: str/datetime.datetime, 提取因子数据的开始日期
+        :param endDate: str/datetime.datetime, 提取因子数据的结束日期
+        :param factorDict: dict, {factorName: factorNormType}
+        :param freq: str, optional, 因子数据的频率
+        :param zipPath: str, optional, 数据文件压缩包地址
+        :return: class， 存储清理后的因子数据
+        """
         self.__startDate = startDate
         self.__endDate = endDate
-        self.__factorNames = factorNames
+        self.__factorDict = factorDict
+        self.__factorNames = factorDict.keys()
+        self.__nbFactor = len(factorDict)
         self.__freq = freq
         self.__tiaocangDate = []
-        self.__nbFactor = len(factorNames)
-        self.__zipPath = zipPath
         # 由于因子csv文件较大,所以默认存储为压缩格式的文件, 第一次使用时自动解压缩
-        self._unzipCsvFiles(self.__zipPath)
+        self._unzipCsvFiles(zipPath)
 
     def _unzipCsvFiles(self, zipPath):
         """
@@ -116,9 +129,49 @@ class FactorLoader(object):
             ret[name] = factor
         return ret
 
+    def _normalizeSingleFactorData(self, factor, industry=None, cap=None):
+        """
+        :param factor: pd.Series, multi index = [tiaoCangDate, secID], value = factor
+        :return: 去极值、中性化、标准化的因子
+        """
+        ret = pd.Series(name=factor.name)
+        tiaoCangDate = sorted(list(set(factor.index.get_level_values('tiaoCangDate'))))
+        for date in tiaoCangDate:
+            factorToUse = getMultiIndexData(factor, 'tiaoCangDate', date)
+            IndustryToUse = getMultiIndexData(industry, 'tiaoCangDate', date) if industry is not None else None
+            capToUse = getMultiIndexData(cap, 'tiaoCangDate', date) if cap is not None else None
+            dataNormed = normalize(factorToUse, IndustryToUse, capToUse)
+            ret = ret.append(dataNormed)
+
+        return ret
+
+    def getNormFactorData(self):
+        factorData = self.getFactorData()
+        for name in self.__factorNames:
+            if self.__factorDict[name] == FactorNormType.IndustryAndCapNeutral:
+                pyFinAssert(('INDUSTRY' in self.__factorNames and 'CAP' in self.__factorNames),
+                            ValueError,
+                            'Failed to neurtalize because of missing industry and cap data')
+                factorData[name] = self._normalizeSingleFactorData(factorData[name],
+                                                                industry=factorData['INDUSTRY'],
+                                                                cap=factorData['CAP'])
+            elif self.__factorDict[name] == FactorNormType.IndustryNeutral:
+                pyFinAssert(('INDUSTRY' in self.__factorNames),
+                            ValueError,
+                            'Failed to neurtalize because of missing industry')
+                factorData[name] = self._normalizeSingleFactorData(factorData[name],
+                                                                industry=factorData['INDUSTRY'])
+
+        return factorData
+
 
 if __name__ == "__main__":
-    factor = FactorLoader('2015-01-05', '2015-12-30', ['NAV', 'ROE', 'RETURN'])
-    # ret = factor.getFactorData()
-    # print ret['RETURN']
-    # print getDataDiv('BP.csv', 'NAV', 'CAP')
+    factor = FactorLoader('2015-01-05',
+                          '2015-12-30',
+                          {'CAP': FactorNormType.Null,
+                           'INDUSTRY': FactorNormType.Null,
+                           'ROE': FactorNormType.IndustryAndCapNeutral,
+                           'RETURN': FactorNormType.IndustryAndCapNeutral})
+    ret = factor.getNormFactorData()
+    print ret['RETURN']
+
