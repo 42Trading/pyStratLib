@@ -12,13 +12,14 @@ from pyStratLib.enums.factorNorm import FactorNormType
 
 
 class DCAMAnalyzer(object):
-    def __init__(self, layerFactor, alphaFactor, secReturn, tiaoCangDate, tiaoCangDateWindowSize=12):
+    def __init__(self, layerFactor, alphaFactor, secReturn, tiaoCangDate, industryWeight=None, tiaoCangDateWindowSize=12):
         self.__layerFactor = layerFactor
         self.__layerFactorNames = [layerFactor.name for layerFactor in self.__layerFactor]
         self.__alphaFactor = alphaFactor
         self.__alphaFactorNames = [alphaFactor.name for alphaFactor in self.__alphaFactor]
         self.__secReturn = secReturn
         self.__tiaoCangDate = tiaoCangDate
+        self.__industryWeight = industryWeight
         self.__startDate = str(Date.fromDateTime(self.__tiaoCangDate[0]))
         self.__endDate = str(Date.fromDateTime(self.__tiaoCangDate[-1]))
         self.__tiaoCangDateWindowSize = tiaoCangDateWindowSize
@@ -242,19 +243,8 @@ class DCAMAnalyzer(object):
             ret[secID] = weightedRank
         return ret
 
-    def selectTopRankSecIDs(self, date=None, nbSecIDsSelected=50):
-        """
-        :param date: datetime, tiaoCangDate
-        :param nbSecIDsSelected: int, optional,
-        :return: list 返回股票代码列表
-        """
-        if date is None:
-            date = self.__tiaoCangDate[self.__tiaoCangDateWindowSize]
 
-        secScore = self.calcSecScoreOnDate(date)
-        secScore.sort_values(ascending=False, inplace=True)
-        secID = secScore.index.tolist()[:nbSecIDsSelected]
-        return secID
+
 
 if __name__ == "__main__":
     factor = FactorLoader('2006-10-05', '2015-11-30',

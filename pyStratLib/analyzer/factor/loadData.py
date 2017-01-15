@@ -154,7 +154,7 @@ class FactorLoader(object):
                             'Failed to neurtalize because of missing industry and cap data')
                 factorData[name] = self._normalizeSingleFactorData(factorData[name],
                                                                    industry=factorData['INDUSTRY'],
-                                                                   cap=factorData['CAP'])
+                                                                   cap=factorData['MV'])
             elif self.__factorDict[name] == FactorNormType.IndustryNeutral:
                 pyFinAssert(('INDUSTRY' in self.__factorNames),
                             ValueError,
@@ -165,10 +165,11 @@ class FactorLoader(object):
         return factorData
 
 
+
 if __name__ == "__main__":
     factor = FactorLoader('2015-01-05',
                           '2015-12-30',
-                          {'CAP': FactorNormType.Null,
+                          {'MV': FactorNormType.Null,
                            'INDUSTRY': FactorNormType.Null,
                            'ROE': FactorNormType.IndustryAndCapNeutral,
                            'RETURN': FactorNormType.IndustryAndCapNeutral})

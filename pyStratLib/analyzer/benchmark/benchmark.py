@@ -2,7 +2,6 @@
 
 from pyStratLib.analyzer.factor.loadData import getMultiIndexData
 
-
 class Benchmark(object):
     def __init__(self, industryWeight):
         self.__industryWeight = industryWeight
@@ -16,6 +15,15 @@ class Benchmark(object):
         if not industryName.endwith('SI'):
             industryName = _industryDict.keys()[_industryDict.values().index(industryName)]
         return getMultiIndexData(self.__industryWeight, 'secID', industryName)
+
+    @property
+    #industry neutral selection
+    def calcNbSecSelectedOnDate(self, date, nbSecSelected=100):
+        industryWeightOnDate = self.getIndustryWeightOnDate(date)
+        industryWeightOnDate['nbSec'] = industryWeightOnDate['weight'] * nbSecSelected
+        industryWeightOnDate.reset_index().set_index('secID')
+        ret = industryWeightOnDate['nbSec'].to_dict()
+        return ret
 
 
 
