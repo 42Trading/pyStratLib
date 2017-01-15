@@ -2,43 +2,46 @@
 # ref: https://uqer.io/community/share/55ff6ce9f9f06c597265ef04
 import numpy as np
 import pandas as pd
+import warnings
 from sklearn.linear_model import LinearRegression
+from PyFin.Utilities import pyFinWarning
+
 
 _industryDict = {
-    '801190.SI': '金融服务(申万)',
-    '801200.SI': '商业贸易(申万)',
-    '801210.SI': '休闲服务(申万)',
-    '801220.SI': '信息服务(申万)',
-    '801230.SI': '综合(申万)',
-    '801170.SI': '交通运输(申万)',
-    '801160.SI': '公用事业(申万)',
-    '801150.SI': '医药生物(申万)',
-    '801140.SI': '轻工制造(申万)',
-    '801130.SI': '纺织服装(申万)',
-    '801120.SI': '食品饮料(申万)',
-    '801110.SI': '家用电器(申万)',
-    '801100.SI': '信息设备(申万)',
-    '801090.SI': '交运设备(申万)',
-    '801080.SI': '电子(申万)',
-    '801070.SI': '机械设备(申万)',
-    '801010.SI': '农林牧渔(申万)',
-    '801020.SI': '采掘(申万)',
-    '801030.SI': '化工(申万)',
-    '801040.SI': '钢铁(申万)',
-    '801050.SI': '有色金属(申万)',
-    '801060.SI': '建筑建材(申万)',
-    '801180.SI': '房地产(申万)',
-    '801880.SI': '汽车(申万)',
-    '801790.SI': '非银金融(申万)',
-    '801780.SI': '银行(申万)',
-    '801770.SI': '通信(申万)',
-    '801760.SI': '传媒(申万)',
-    '801750.SI': '计算机(申万)',
-    '801740.SI': '国防军工(申万)',
-    '801730.SI': '电气设备(申万)',
-    '801720.SI': '建筑装饰(申万)',
-    '801710.SI': '建筑材料(申万)',
-    '801890.SI': '机械设备(申万)'
+    '801190.SI': '金融服务',
+    '801200.SI': '商业贸易',
+    '801210.SI': '休闲服务',
+    '801220.SI': '信息服务',
+    '801230.SI': '综合',
+    '801170.SI': '交通运输',
+    '801160.SI': '公用事业',
+    '801150.SI': '医药生物',
+    '801140.SI': '轻工制造',
+    '801130.SI': '纺织服装',
+    '801120.SI': '食品饮料',
+    '801110.SI': '家用电器',
+    '801100.SI': '信息设备',
+    '801090.SI': '交运设备',
+    '801080.SI': '电子',
+    '801070.SI': '机械设备',
+    '801010.SI': '农林牧渔',
+    '801020.SI': '采掘',
+    '801030.SI': '化工',
+    '801040.SI': '钢铁',
+    '801050.SI': '有色金属',
+    '801060.SI': '建筑建材',
+    '801180.SI': '房地产',
+    '801880.SI': '汽车',
+    '801790.SI': '非银金融',
+    '801780.SI': '银行',
+    '801770.SI': '通信',
+    '801760.SI': '传媒',
+    '801750.SI': '计算机',
+    '801740.SI': '国防军工',
+    '801730.SI': '电气设备',
+    '801720.SI': '建筑装饰',
+    '801710.SI': '建筑材料',
+    '801890.SI': '机械设备'
 }
 
 
@@ -108,10 +111,12 @@ def neutralize(factor, industry, cap=None):
     :return: 中性化后的因子
     """
     # 通过concat把数据对齐
+    pyFinWarning(factor.size == industry.size, Warning, "size of factor does not equal that of industry")
     if cap is None:
         data = pd.concat([factor, industry], join='inner', axis=1)
         lcap = None
     else:
+        pyFinWarning(factor.size == cap.size, Warning, "size of factor does not equal that of cap")
         data = pd.concat([factor, industry, cap], join='inner', axis=1)
         lcap = np.log(data[data.columns[2]])
 
@@ -148,10 +153,10 @@ if __name__ == "__main__":
     factor = [10, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
               1.0]
     industry = ['801190.SI', '801190.SI', '801200.SI', '801200.SI', '801200.SI', '801200.SI', '801200.SI', '801200.SI',
-                '801200.SI', '801200.SI']
+                '801200.SI', '801200.SI', '801201.SI']
     cap = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
     factor = pd.Series(factor, index=index)
     industry = pd.Series(industry, index=['000001.SZ', '000002.SZ', '100003.SZ', '000004.SZ', '000005.SZ', '000006.SZ',
-                                          '000007.SZ', '000008.SZ', '000009.SZ', '000010.SZ'])
+                                          '000007.SZ', '000008.SZ', '000009.SZ', '000010.SZ', '000011.SZ'])
     cap = pd.Series(cap, index=index)
     print normalize(factor, industry, cap)
