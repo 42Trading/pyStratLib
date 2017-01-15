@@ -109,22 +109,23 @@ class DCAMAnalyzer(object):
         low, high = self.calcRankIC(layerFactor)
         result = pd.DataFrame(columns=self.__alphaFactorNames, index=np.arange(12))
         for i in self.__alphaFactorNames:
-            meanHigh = np.array(high[i]).mean()
             meanLow = np.array(low[i]).mean()
-            stdHigh = np.array(high[i]).std()
+            meanHigh = np.array(high[i]).mean()
             stdLow = np.array(low[i]).std()
+            stdHigh = np.array(high[i]).std()
             # 均值的t检验, 原假设为两个独立样本的均值相同
-            t, p_t = st.ttest_ind(high[i], low[i], equal_var=False)
+            t, p_t = st.ttest_ind( low[i], high[i], equal_var=False)
             # 方差的F检验，原假设为两个独立样本的方差相同
-            F, p_F = st.levene(high[i], low[i])
+            F, p_F = st.levene(low[i], high[i])
             # 分布的K-S检验，原假设为两个独立样本是否来自同一个连续分布
-            ks, p_ks = st.ks_2samp(high[i], low[i])
-            result[i] = [meanHigh,meanLow,stdHigh,stdLow,meanHigh/stdHigh,meanLow/stdLow,t,p_t,F,p_F,ks,p_ks]
+            ks, p_ks = st.ks_2samp(low[i], high[i])
+            result[i] = [meanLow, meanHigh, stdLow, stdHigh,
+                         meanLow/stdLow, meanHigh/stdHigh, t, p_t, F, p_F, ks, p_ks]
 
         result = result.T
         np.arrays = [['mean','mean','std','std','IR','IR','Two sample t test','Two sample t test','levene test','levene test','K-S test',
                       'K-S test'],
-                     ['high','low','high','low','high','low','t','p_value','F','p_value','KS','p_value']]
+                     ['low','high','low','high','low','high','t','p_value','F','p_value','KS','p_value']]
         result.columns = pd.MultiIndex.from_tuples(zip(*np.arrays))
         ret = pd.concat([result], axis=1, keys = [layerFactor.name + '分层后因子表现     时间：' + self.__startDate + ' -- ' + self.__endDate])
         return ret
@@ -256,8 +257,8 @@ class DCAMAnalyzer(object):
         return secID
 
 if __name__ == "__main__":
-    factor = FactorLoader('2006-01-05', '2015-12-31',
-                          {'MV': FactorNormType.IndustryAndCapNeutral, # 分层因子
+    factor = FactorLoader('2006-10-05', '2015-11-30',
+                          {'MV': FactorNormType.Null, # 分层因子
                            'BP_LF': FactorNormType.IndustryAndCapNeutral, # 分层因子
                            'EquityGrowth_YOY': FactorNormType.IndustryAndCapNeutral, # 分层因子
                            'ROE': FactorNormType.IndustryAndCapNeutral,   # 分层因子
@@ -270,9 +271,9 @@ if __name__ == "__main__":
                            'RETURN': FactorNormType.Null,
                            'INDUSTRY': FactorNormType.Null
                             })
-    factorData = factor.getFactorData()
+    factorData = factor.getNormFactorData()
     analyzer = DCAMAnalyzer([factorData['MV']],
-                            [factorData['BP_LF'], factorData['GP2Asset'], factorData['PEG'],
+                            [factorData['BP_LF'], factor['EP2_TTM'], factor['SP_TTM'], factorData['GP2Asset'], factorData['PEG'],
                              factorData['ProfitGrowth_Qr_YOY'], factorData['TO_adj']],
                             factorData['RETURN'],
                             factor.getTiaoCangDate())
