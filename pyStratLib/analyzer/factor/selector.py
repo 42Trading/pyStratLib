@@ -19,15 +19,16 @@ def secSelectorOnDate(  secScore,
     :return: pd.Series, sec id selected
     """
     secID = []
+    secScore.sort_values(ascending=False, inplace=True)
     # 判断是否选股时是否需要做到行业中性
     if benchmark is not None:
-        indsutryNbSecSelected = benchmark.calcNbSecSelectedOnDate(date)
+        indsutryNbSecSelected = benchmark.calcNbSecSelectedOnDate(date, nbSecSelected)
         for name, group in secScore.groupby(level='industry'):
             nbSec = indsutryNbSecSelected[name]
-            topSec = group.sort_index(by='secScore')[-nbSec:]
+            topSec = group[:nbSec+1]
             secID += topSec.index.get_level_values('secID')
     else:
-        secID = secScore.index.tolist()[:nbSecSelected]
+        secID = secScore.index.tolist()[:nbSecSelected+1]
 
     ret = pd.Series(secID, name=date)
 
