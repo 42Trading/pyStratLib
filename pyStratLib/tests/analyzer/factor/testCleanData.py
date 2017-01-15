@@ -128,13 +128,13 @@ class TestCleanData(unittest.TestCase):
                                  names=['tiaoCangDate', 'secID']))
         pd.util.testing.assert_series_equal(calculated, expected)
 
-        calculated = adjustFactorDate(factorRaw, '2015-05-01', '2016-06-30', freq='y')
+        calculated = adjustFactorDate(factorRaw, '2016-05-01', '2017-01-30', freq='y')
         expected = pd.Series([5.0], name='factor',
                              index=pd.MultiIndex.from_arrays([[datetime.datetime(2016, 12, 31)], ['300518.SZ']],
                                                              names=['tiaoCangDate', 'secID']))
         pd.util.testing.assert_series_equal(calculated, expected)
 
-        calculated = adjustFactorDate(factorRaw, datetime.datetime(2015, 5, 1), datetime.datetime(2016, 6, 30),
+        calculated = adjustFactorDate(factorRaw, datetime.datetime(2016, 5, 1), datetime.datetime(2017, 7, 30),
                                       freq='y')
         expected = pd.Series([5.0], name='factor',
                              index=pd.MultiIndex.from_arrays([[datetime.datetime(2016, 12, 31)], ['300518.SZ']],
