@@ -36,10 +36,8 @@ class DCAMAnalyzer(object):
         给定某一时间，按分层因子layerFactor把股票分为数量相同的两组（大/小）
         """
         data = getMultiIndexData(layerFactor, 'tiaoCangDate', date)
-        data.to_csv('unsort.csv')
         # 按分层因子值从小到大排序
         data.sort_values(ascending=True, inplace=True)
-        data.to_csv('sort.csv')
         secIDs = data.index.get_level_values('secID').tolist()
         # 分组,因子值小的哪一组股票为low,高的为high
         group_low = secIDs[:np.round(len(data))/2]
@@ -208,9 +206,9 @@ class DCAMAnalyzer(object):
             # TODO check why length of factorLow <> groupLow
             factorLow = self.getAlphaFactor(groupLow, date)
             factorHigh = self.getAlphaFactor(groupHigh, date)
-            # 由高到低排序
-            factorLowRank = factorLow.rank(ascending=False, axis=0)
-            factorHighRank = factorHigh.rank(ascending=False, axis=0)
+            # 由低到高排序
+            factorLowRank = factorLow.rank(ascending=True, axis=0)
+            factorHighRank = factorHigh.rank(ascending=True, axis=0)
             # multi index DataFrame
             secIDIndex = factorLowRank.index.union(factorHighRank.index)
             layerFactorIndex = [layerFactor.name] * len(secIDIndex)
@@ -220,7 +218,7 @@ class DCAMAnalyzer(object):
             alphaFactorRank = pd.DataFrame(factorRankArray, index=index, columns=self.__alphaFactorNames)
             # merge
             ret = pd.concat([ret, alphaFactorRank], axis=0)
-
+        ret.fillna(0, inplace=True)
         return ret
 
     def calcSecScoreOnDate(self, date):
@@ -241,10 +239,10 @@ class DCAMAnalyzer(object):
             weightedRank = 0.0
             for layerFactor in factorRankMatrix.index.get_level_values('layerFactor'):
                 factorRankOnLayerFactor = factorRankMatrix.loc[factorRankMatrix.index.get_level_values('layerFactor')==layerFactor]
-                rank = factorRankOnLayerFactor.values
+                rank = factorRankOnLayerFactor.values.flatten()
                 lowHigh = factorRankOnLayerFactor.index.get_level_values('lowHigh')
                 weight = alphaWeightLow.loc[layerFactor].values if lowHigh == 'low' else alphaWeightHigh.loc[layerFactor].values
-                layerFactorQuantileToUse = layerFactorQuantile[layerFactor].loc(secID)
+                layerFactorQuantileToUse = layerFactorQuantile[layerFactor][secID]
                 weightedRank += np.dot(weight, rank) * self._calcLayerFactorDistance(layerFactorQuantileToUse)
             ret[secID] = weightedRank
         return ret
@@ -253,7 +251,7 @@ class DCAMAnalyzer(object):
 
 
 if __name__ == "__main__":
-    factor = FactorLoader('2010-10-05', '2016-10-31',
+    factor = FactorLoader('2015-10-05', '2016-10-31',
                           {'MV': FactorNormType.Null, # 分层因子
                            'BP_LF': FactorNormType.IndustryAndCapNeutral, # 分层因子
                            'EquityGrowth_YOY': FactorNormType.IndustryAndCapNeutral, # 分层因子
@@ -274,9 +272,9 @@ if __name__ == "__main__":
                             factorData['RETURN'],
                             factor.getTiaoCangDate())
 
-    print analyzer.getAnalysis(saveFile=True)
+    #print analyzer.getAnalysis(saveFile=True)
     #print analyzer.calcAlphaFactorRankOnDate('2012-01-31')
-    #print analyzer.calcSecScoreOnDate('2012-01-31')
+    print analyzer.calcSecScoreOnDate('2016-10-31')
 
 
 
