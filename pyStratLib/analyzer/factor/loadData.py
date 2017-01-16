@@ -143,6 +143,9 @@ class FactorLoader(object):
             dataNormed = normalize(factorToUse, IndustryToUse, capToUse)
             ret = ret.append(dataNormed)
 
+        # save in multi index format
+        index = pd.MultiIndex.from_tuples(ret.index, names=['tiaoCangDate', 'secID'])
+        ret = pd.Series(data=ret.values, index=index, name=factor.name)
         return ret
 
     def getNormFactorData(self):

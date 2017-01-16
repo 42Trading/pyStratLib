@@ -85,10 +85,10 @@ class DCAMAnalyzer(object):
             date = self.__tiaoCangDate[j]
             nextDate = self.__tiaoCangDate[j+1]
             groupLow, groupHigh = self.getSecGroup(layerFactor, date)         #分组
-            returnLow = self.getSecReturn(groupLow, date)
-            returnHigh = self.getSecReturn(groupHigh, date)     #得到当期收益序列
-            factorLow = self.getAlphaFactor(groupLow, nextDate)
-            factorHigh = self.getAlphaFactor(groupHigh, nextDate)      #得到上期因子序列
+            returnLow = self.getSecReturn(groupLow, nextDate)
+            returnHigh = self.getSecReturn(groupHigh, nextDate)     #得到当期收益序列
+            factorLow = self.getAlphaFactor(groupLow, date)
+            factorHigh = self.getAlphaFactor(groupHigh, date)      #得到上期因子序列
             tableLow = pd.concat([returnLow, factorLow], axis=1)
             tableHigh = pd.concat([returnHigh, factorHigh], axis=1)
             for k in self.__alphaFactorNames:
@@ -100,7 +100,7 @@ class DCAMAnalyzer(object):
         high = high.dropna()
         return low, high
 
-    def getAnalysis(self, layerFactor=None):
+    def getAnalysis(self, layerFactor=None, saveFile=False):
         """
         :param layerFactor: pd.Series, layer factor series
         :return:  对给定情景因子分层后的股票组合进行的统计分析
@@ -129,6 +129,8 @@ class DCAMAnalyzer(object):
                      ['low','high','low','high','low','high','t','p_value','F','p_value','KS','p_value']]
         result.columns = pd.MultiIndex.from_tuples(zip(*np.arrays))
         ret = pd.concat([result], axis=1, keys = [layerFactor.name + '分层后因子表现     时间：' + self.__startDate + ' -- ' + self.__endDate])
+        if saveFile:
+            ret.to_csv('analysis.csv')
         return ret
 
     def calcLayerFactorDistance(self, percentile):
@@ -247,13 +249,13 @@ class DCAMAnalyzer(object):
 
 
 if __name__ == "__main__":
-    factor = FactorLoader('2006-10-05', '2015-11-30',
+    factor = FactorLoader('2006-10-05', '2016-10-31',
                           {'MV': FactorNormType.Null, # 分层因子
                            'BP_LF': FactorNormType.IndustryAndCapNeutral, # 分层因子
                            'EquityGrowth_YOY': FactorNormType.IndustryAndCapNeutral, # 分层因子
                            'ROE': FactorNormType.IndustryAndCapNeutral,   # 分层因子
                            'EP2_TTM': FactorNormType.IndustryAndCapNeutral, # alpha因子
-                           'SP_TTM': FactorNormType.IndustryAndCapNeutral, # alpha 因子
+                           #'SP_TTM': FactorNormType.IndustryAndCapNeutral, # alpha 因子
                            'GP2Asset': FactorNormType.IndustryAndCapNeutral, # alpha因子
                            'PEG': FactorNormType.IndustryAndCapNeutral, # alpha因子
                            'ProfitGrowth_Qr_YOY': FactorNormType.IndustryAndCapNeutral, # alpha因子
@@ -263,12 +265,12 @@ if __name__ == "__main__":
                             })
     factorData = factor.getNormFactorData()
     analyzer = DCAMAnalyzer([factorData['MV']],
-                            [factorData['BP_LF'], factor['EP2_TTM'], factor['SP_TTM'], factorData['GP2Asset'], factorData['PEG'],
+                            [factorData['BP_LF'], factorData['ROE'], factorData['EP2_TTM'], factorData['GP2Asset'], factorData['PEG'],
                              factorData['ProfitGrowth_Qr_YOY'], factorData['TO_adj']],
                             factorData['RETURN'],
                             factor.getTiaoCangDate())
 
-    print analyzer.getAnalysis()
+    print analyzer.getAnalysis(saveFile=True)
     print analyzer.calcAlphaFactorWeightOnDate('2012-01-31')
 
 
