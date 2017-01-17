@@ -9,17 +9,19 @@ from pyStratLib.analyzer.factor.cleanData import getMultiIndexData
 from PyFin.Utilities import pyFinAssert
 from PyFin.DateUtilities import Date
 from pyStratLib.enums.factorNorm import FactorNormType
+from pyStratLib.analyzer.factor.selector import secSelectorOnDate
+from pyStratLib.analyzer.benchmark.benchmark import Benchmark
 
 
 class DCAMAnalyzer(object):
-    def __init__(self, layerFactor, alphaFactor, secReturn, tiaoCangDate, industryWeight=None, tiaoCangDateWindowSize=12):
+    def __init__(self, layerFactor, alphaFactor, secReturn, tiaoCangDate, industryCode=None, tiaoCangDateWindowSize=12):
         self.__layerFactor = layerFactor
         self.__layerFactorNames = [layerFactor.name for layerFactor in self.__layerFactor]
         self.__alphaFactor = alphaFactor
         self.__alphaFactorNames = [alphaFactor.name for alphaFactor in self.__alphaFactor]
         self.__secReturn = secReturn
         self.__tiaoCangDate = tiaoCangDate
-        self.__industryWeight = industryWeight
+        self.__industryCode = industryCode
         self.__startDate = str(Date.fromDateTime(self.__tiaoCangDate[0]))
         self.__endDate = str(Date.fromDateTime(self.__tiaoCangDate[-1]))
         self.__tiaoCangDateWindowSize = tiaoCangDateWindowSize
@@ -28,7 +30,7 @@ class DCAMAnalyzer(object):
                     "length of tiaoCangDate must be larger than moving window size")
 
 
-    def getSecGroup(self, layerFactor, date):
+    def _getSecGroup(self, layerFactor, date):
         """
         :param date: datetime, 调仓日
         :param layerFactor: multi index pd.Series, 情景分层因子
@@ -44,7 +46,7 @@ class DCAMAnalyzer(object):
         group_high = secIDs[np.round(len(data))/2:]
         return group_low, group_high
 
-    def getSecReturn(self, secIDs, date):
+    def _getSecReturn(self, secIDs, date):
         """
         :param secIDs: list of sec ids
         :param date: datetime, 调仓日
@@ -56,7 +58,7 @@ class DCAMAnalyzer(object):
         data = data.set_index('secID')
         return data
 
-    def getAlphaFactor(self, secIDs, date):
+    def _getAlphaFactor(self, secIDs, date):
         """
         :param secIDs: list of sec ids
         :param date: datetime, 调仓日
@@ -72,7 +74,7 @@ class DCAMAnalyzer(object):
         ret.columns = self.__alphaFactorNames
         return ret
 
-    def calcRankIC(self, layerFactor):
+    def _calcRankIC(self, layerFactor):
         """
         :param layerFactor: pd.Series, 分层因子
         :return: pd.DataFrame, index = tiaoCangDate, col = [alpha factor names]
@@ -84,11 +86,11 @@ class DCAMAnalyzer(object):
         for j in range(0, len(self.__tiaoCangDate)-1):   #对时间做循环，得到每个时间点的rankIC
             date = self.__tiaoCangDate[j]
             nextDate = self.__tiaoCangDate[j+1]
-            groupLow, groupHigh = self.getSecGroup(layerFactor, date)         #分组
-            returnLow = self.getSecReturn(groupLow, nextDate)
-            returnHigh = self.getSecReturn(groupHigh, nextDate)     #得到当期收益序列
-            factorLow = self.getAlphaFactor(groupLow, date)
-            factorHigh = self.getAlphaFactor(groupHigh, date)      #得到上期因子序列
+            groupLow, groupHigh = self._getSecGroup(layerFactor, date)         #分组
+            returnLow = self._getSecReturn(groupLow, nextDate)
+            returnHigh = self._getSecReturn(groupHigh, nextDate)     #得到当期收益序列
+            factorLow = self._getAlphaFactor(groupLow, date)
+            factorHigh = self._getAlphaFactor(groupHigh, date)      #得到上期因子序列
             tableLow = pd.concat([returnLow, factorLow], axis=1)
             tableHigh = pd.concat([returnHigh, factorHigh], axis=1)
             for k in self.__alphaFactorNames:
@@ -107,7 +109,7 @@ class DCAMAnalyzer(object):
         """
         if layerFactor is None:
             layerFactor = self.__layerFactor[0]
-        low, high = self.calcRankIC(layerFactor)
+        low, high = self._calcRankIC(layerFactor)
         result = pd.DataFrame(columns=self.__alphaFactorNames, index=np.arange(12))
         for i in self.__alphaFactorNames:
             meanLow = np.array(low[i]).mean()
@@ -164,7 +166,7 @@ class DCAMAnalyzer(object):
         ret.columns = self.__layerFactorNames
         return ret
 
-    def calcAlphaFactorWeightOnDate(self, date):
+    def _calcAlphaFactorWeightOnDate(self, date):
         """
         :param: date, datetime, tiaoCangDate
         :return:  pd.DataFrame,  index = [layerFactor], cols= [alpha factor name]
@@ -180,7 +182,7 @@ class DCAMAnalyzer(object):
         retHigh = pd.DataFrame(columns=self.__alphaFactorNames)
 
         for layerFactor in self.__layerFactor:
-            low, high = self.calcRankIC(layerFactor)
+            low, high = self._calcRankIC(layerFactor)
             lowToUse = low.loc[tiaoCangDateRange]
             highToUse = high.loc[tiaoCangDateRange]
             weightLow = lowToUse.mean(axis=0) / lowToUse.std(axis=0)
@@ -202,10 +204,10 @@ class DCAMAnalyzer(object):
             date = Date.strptime(date).toDateTime()
         for layerFactor in self.__layerFactor:
             # 分层因子下股票分为两组
-            groupLow, groupHigh = self.getSecGroup(layerFactor, date)
+            groupLow, groupHigh = self._getSecGroup(layerFactor, date)
             # TODO check why length of factorLow <> groupLow
-            factorLow = self.getAlphaFactor(groupLow, date)
-            factorHigh = self.getAlphaFactor(groupHigh, date)
+            factorLow = self._getAlphaFactor(groupLow, date)
+            factorHigh = self._getAlphaFactor(groupHigh, date)
             # 由低到高排序
             factorLowRank = factorLow.rank(ascending=True, axis=0)
             factorHighRank = factorHigh.rank(ascending=True, axis=0)
@@ -221,18 +223,18 @@ class DCAMAnalyzer(object):
         ret.fillna(0, inplace=True)
         return ret
 
-    def calcSecScoreOnDate(self, date):
+    def _calcSecScoreOnDate(self, date):
         """
         :param secIDs: list, a group of sec ids
         :param date: datetime, tiaoCangDate
-        :return: pd.Series, index = secID, cols = score
-        给定调仓日,
+        :return: pd.Series, index = secID, cols = score, industry
+        给定调仓日, 返回股票打分列表
         """
-        alphaWeightLow, alphaWeightHigh = self.calcAlphaFactorWeightOnDate(date)
+        alphaWeightLow, alphaWeightHigh = self._calcAlphaFactorWeightOnDate(date)
         alphaFactorRank = self._calcAlphaFactorRankOnDate(date)
         layerFactorQuantile = self._caclLayerFactorQuantileOnDate(date)
         secIDs = layerFactorQuantile.index.tolist()
-        ret = pd.Series(index=secIDs, name='score')
+        ret = pd.Series(index=secIDs, name=date)
         for secID in secIDs:
             # 提取secID对应的alphaFactorRank DataFrame, index = [layerFactor, high/low], col = alphaFactor
             factorRankMatrix = getMultiIndexData(alphaFactorRank, 'secID', secID)
@@ -245,12 +247,25 @@ class DCAMAnalyzer(object):
                 layerFactorQuantileToUse = layerFactorQuantile[layerFactor][secID]
                 weightedRank += np.dot(weight, rank) * self._calcLayerFactorDistance(layerFactorQuantileToUse)
             ret[secID] = weightedRank
+
+        return ret
+
+    def calcSecScore(self):
+        """
+        :param self:
+        :return: pd.DataFrame, index = secID, cols = scores on tiaoCangDate
+        返回所有调仓日的股票打分列表
+        """
+        ret = pd.DataFrame()
+        for date in self.__tiaoCangDate[self.__tiaoCangDateWindowSize:]:
+            secScore = self._calcSecScoreOnDate(date)
+            ret = pd.concat([ret, secScore], axis=1)
+
         return ret
 
 
+def DCAMSelector():
 
-
-if __name__ == "__main__":
     factor = FactorLoader('2015-10-05', '2016-10-31',
                           {'MV': FactorNormType.Null, # 分层因子
                            'BP_LF': FactorNormType.IndustryAndCapNeutral, # 分层因子
@@ -262,10 +277,11 @@ if __name__ == "__main__":
                            'PEG': FactorNormType.IndustryAndCapNeutral, # alpha因子
                            'ProfitGrowth_Qr_YOY': FactorNormType.IndustryAndCapNeutral, # alpha因子
                            'TO_adj': FactorNormType.IndustryAndCapNeutral, # alpha因子
-                           'RETURN': FactorNormType.Null,
-                           'INDUSTRY': FactorNormType.Null
+                           'RETURN': FactorNormType.IndustryAndCapNeutral,
+                           'INDUSTRY': FactorNormType.Null,
+                           'IND_WGT': FactorNormType.Null
                             })
-    factorData = factor.getFactorData()
+    factorData = factor.getNormFactorData()
     analyzer = DCAMAnalyzer([factorData['BP_LF']],
                             [factorData['ROE'], factorData['EP2_TTM'], factorData['GP2Asset'], factorData['PEG'],
                              factorData['ProfitGrowth_Qr_YOY'], factorData['TO_adj']],
@@ -274,8 +290,10 @@ if __name__ == "__main__":
 
     #print analyzer.getAnalysis(saveFile=True)
     #print analyzer.calcAlphaFactorRankOnDate('2012-01-31')
-    print analyzer.calcSecScoreOnDate('2016-10-31')
+    print analyzer._calcSecScoreOnDate('2016-10-31')
 
 
 
+if __name__ == "__main__":
+    DCAMSelector()
 
