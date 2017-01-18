@@ -253,14 +253,16 @@ class DCAMAnalyzer(object):
     def calcSecScore(self):
         """
         :param self:
-        :return: pd.DataFrame, index = secID, cols = scores on tiaoCangDate
+        :return: pd.Series, index = [tiaoCangDate, secID], value = score
         返回所有调仓日的股票打分列表
         """
-        ret = pd.DataFrame()
+        ret = pd.Series()
         for date in self.__tiaoCangDate[self.__tiaoCangDateWindowSize:]:
             secScore = self._calcSecScoreOnDate(date)
-            ret = pd.concat([ret, secScore], axis=1)
-
+            index = pd.MultiIndex.from_arrays([date * len(secScore.values), secScore.index.values],
+                                              names=['tiaoCangDate','secID'])
+            currentSecScore = pd.Series(secScore.values, index=index, name='score')
+            ret = ret.append(currentSecScore)
         return ret
 
 

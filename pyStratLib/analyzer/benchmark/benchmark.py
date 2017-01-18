@@ -6,17 +6,14 @@ class Benchmark(object):
     def __init__(self, industryWeight):
         self.__industryWeight = industryWeight
 
-    @property
     def getIndustryWeightOnDate(self, date):
         return getMultiIndexData(self.__industryWeight, 'tradeDate', date)
 
-    @property
     def getIndustryWeightOnName(self, industryName):
         if not industryName.endwith('SI'):
             industryName = _industryDict.keys()[_industryDict.values().index(industryName)]
         return getMultiIndexData(self.__industryWeight, 'secID', industryName)
 
-    @property
     #industry neutral selection
     def calcNbSecSelectedOnDate(self, date, nbSecSelected=100):
         industryWeightOnDate = self.getIndustryWeightOnDate(date)
