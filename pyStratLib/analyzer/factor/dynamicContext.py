@@ -9,9 +9,8 @@ from pyStratLib.analyzer.factor.cleanData import getMultiIndexData
 from PyFin.Utilities import pyFinAssert
 from PyFin.DateUtilities import Date
 from pyStratLib.enums.factorNorm import FactorNormType
-from pyStratLib.analyzer.factor.selector import secSelectorOnDate
+from pyStratLib.analyzer.factor.selector import Selector
 from pyStratLib.analyzer.benchmark.benchmark import Benchmark
-
 
 class DCAMAnalyzer(object):
     def __init__(self, layerFactor, alphaFactor, secReturn, tiaoCangDate, industryCode=None, tiaoCangDateWindowSize=12):
@@ -257,12 +256,18 @@ class DCAMAnalyzer(object):
         返回所有调仓日的股票打分列表
         """
         ret = pd.Series()
+        dateIndex = []
+        secIDIndex = []
+        secScoreValue = []
         for date in self.__tiaoCangDate[self.__tiaoCangDateWindowSize:]:
             secScore = self._calcSecScoreOnDate(date)
-            index = pd.MultiIndex.from_arrays([date * len(secScore.values), secScore.index.values],
-                                              names=['tiaoCangDate','secID'])
-            currentSecScore = pd.Series(secScore.values, index=index, name='score')
-            ret = ret.append(currentSecScore)
+            dateIndex += [date] * len(secScore.values)
+            secIDIndex += list(secScore.index.values)
+            secScoreValue += list(secScore.values)
+
+        index = pd.MultiIndex.from_arrays([dateIndex, secIDIndex], names=['tiaoCangDate','secID'])
+        ret = pd.Series(secScoreValue, index=index, name='score')
+
         return ret
 
 
@@ -283,16 +288,22 @@ def DCAMSelector():
                            'INDUSTRY': FactorNormType.Null,
                            'IND_WGT': FactorNormType.Null
                             })
-    factorData = factor.getNormFactorData()
-    analyzer = DCAMAnalyzer([factorData['BP_LF']],
-                            [factorData['ROE'], factorData['EP2_TTM'], factorData['GP2Asset'], factorData['PEG'],
-                             factorData['ProfitGrowth_Qr_YOY'], factorData['TO_adj']],
-                            factorData['RETURN'],
-                            factor.getTiaoCangDate())
+    factorData = factor.getFactorData()
 
-    #print analyzer.getAnalysis(saveFile=True)
-    #print analyzer.calcAlphaFactorRankOnDate('2012-01-31')
-    print analyzer._calcSecScoreOnDate('2016-10-31')
+    analyzer = DCAMAnalyzer(layerFactor=[factorData['BP_LF']],
+                            alphaFactor=[factorData['ROE'], factorData['EP2_TTM'], factorData['GP2Asset'], factorData['PEG'],
+                             factorData['ProfitGrowth_Qr_YOY'], factorData['TO_adj']],
+                            secReturn=factorData['RETURN'],
+                            tiaoCangDate=factor.getTiaoCangDate())
+    secScore = analyzer.calcSecScore()
+
+    benchmark = Benchmark(industryWeight=factorData['IND_WGT'])
+    selector = Selector(secScore=secScore,
+                        industry=factorData['INDUSTRY'],
+                        benchmark=benchmark)
+    selector.industryNeutral = False
+    selector.secSelection()
+    print selector.secSelected
 
 
 

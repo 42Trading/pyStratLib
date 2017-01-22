@@ -10,13 +10,13 @@ from PyFin.Utilities import pyFinAssert
 class Selector(object):
     def __init__(self,
                  secScore,
-                 industry,
+                 industry=None,
                  nbSecSelected=100,
                  benchmark=None,
                  saveFile=False):
         """
-        :param secScore: pd.DataFrame, index = secID, col = tiaoCangDate, value = score
-        :param industry: pd.DataFrame, index = secID, col = tiaoCangDate, value = industry name
+        :param secScore: pd.Series, index = [tiaoCangDate, secID], value = score
+        :param industry: pd.Series, optional, index = [tiaoCangDate, secID], value = industry name
         :param nbSecSelected: int, optional, nb sec to be selected
         :param benchmark: Benchmark class object, optional
         :param saveFile: bool, optional, save result to csv or not
@@ -28,7 +28,6 @@ class Selector(object):
         self._nbSecSelected = nbSecSelected
         self._benchmark = benchmark
         self._saveFile = saveFile
-        self._tiaoCangDate = self._secScore.columns.values
         self._secSelected = None
         self._industryNeutral = True if self._benchmark is not None else False
 
@@ -43,22 +42,26 @@ class Selector(object):
     @industryNeutral.setter
     def industryNeutral(self, flag):
         pyFinAssert(isinstance(flag, bool), TypeError, "flag must be bool type variable")
-        self.__industryNeutral = flag
+        self._industryNeutral = flag
 
 
     def secSelection(self):
-        secScore = pd.concat([self._secScore, self._industry], join_axes=[self._secScore.index], axis=1)
+        if self._industry is not None:
+            secScore = pd.concat([self._secScore, self._industry], join_axes=[self._secScore.index], axis=1)
         ret = pd.DataFrame()
         for date in secScore.index.get_level_values('tiaoCangDate'):
             secScoreOnDate = getMultiIndexData(secScore, 'tiaoCangDate', date)
             secScoreOnDate.sort_values(by='score', ascending=False, inplace=True)
-            if self.__industryNeutral:
+            if self._industryNeutral:
+                pyFinAssert(self._industry is not None, ValueError, "industry information missing ")
                 nbSecByIndustry = self._benchmark.calcNbSecSelectedOnDate(date)
-                #TODO implementation
+                for name, group in secScoreOnDate.groupby('industry'):
+                    ret = pd.concat([ret, group.nlargest(nbSecByIndustry[name], 'score')], axis=0)
             else:
                 secScoreOnDate = secScoreOnDate[:self._nbSecSelected+1]
                 ret = pd.concat([ret, secScoreOnDate], axis=0)
-        return ret
+        self._secSelected = ret
+        return
 
 
 
