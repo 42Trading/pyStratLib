@@ -29,6 +29,7 @@ class Selector(object):
         self._benchmark = benchmark
         self._saveFile = saveFile
         self._secSelected = None
+        self._tiaoCangDate = list(set(self._secScore.index.get_level_values('tiaoCangDate').tolist()))
         self._industryNeutral = True if self._benchmark is not None else False
 
     @property
@@ -49,7 +50,7 @@ class Selector(object):
         if self._industry is not None:
             secScore = pd.concat([self._secScore, self._industry], join_axes=[self._secScore.index], axis=1)
         ret = pd.DataFrame()
-        for date in secScore.index.get_level_values('tiaoCangDate'):
+        for date in self._tiaoCangDate:
             secScoreOnDate = getMultiIndexData(secScore, 'tiaoCangDate', date)
             secScoreOnDate.sort_values(by='score', ascending=False, inplace=True)
             if self._industryNeutral:
