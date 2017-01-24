@@ -21,10 +21,10 @@ class DCAMAnalyzer(object):
         self._secReturn = secReturn
         self._tiaoCangDate = tiaoCangDate
         self._industryCode = industryCode
-        self._startDate = str(Date.fromDateTime(self.__tiaoCangDate[0]))
-        self._endDate = str(Date.fromDateTime(self.__tiaoCangDate[-1]))
+        self._startDate = str(Date.fromDateTime(self._tiaoCangDate[0]))
+        self._endDate = str(Date.fromDateTime(self._tiaoCangDate[-1]))
         self._tiaoCangDateWindowSize = tiaoCangDateWindowSize
-        pyFinAssert(len(self.__tiaoCangDate) > self.__tiaoCangDateWindowSize,
+        pyFinAssert(len(self._tiaoCangDate) > self._tiaoCangDateWindowSize,
                     ValueError,
                     "length of tiaoCangDate must be larger than moving window size")
 
@@ -291,13 +291,13 @@ def DCAMSelector(analyzeFactorOnly=False):
     factorData = factor.getNormFactorData()
 
     analyzer = DCAMAnalyzer(layerFactor=[factorData['MV']],
-                            alphaFactor=[factorData['ROE'], factorData['EP2_TTM'], factorData['GP2Asset'], factorData['PEG'],
-                             factorData['ProfitGrowth_Qr_YOY'], factorData['TO_adj']],
+                            alphaFactor=[factorData['BP_LF'], factorData['ROE'], factorData['EP2_TTM'], factorData['GP2Asset'], factorData['PEG'],
+                             factorData['EquityGrowth_YOY'], factorData['ProfitGrowth_Qr_YOY'], factorData['TO_adj']],
                             secReturn=factorData['RETURN'],
                             tiaoCangDate=factor.getTiaoCangDate())
 
     if analyzeFactorOnly:
-        print analyzer.getAnalysis()
+        print analyzer.getAnalysis(saveFile=True)
     else:
         secScore = analyzer.calcSecScore()
 
