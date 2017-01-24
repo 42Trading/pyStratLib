@@ -100,11 +100,11 @@ def normalize(factor, industry=None, cap=None):
     :param factor:  pd.Series, 原始截面因子
     :param industry: pd.Series, value = 行业名称
     :param cap: optional, pd.Series, value = cap value
-    :return: 去极值、中性化、标准化的因子
+    :return: 去极值、标准化、中性化的因子
     """
     x = winsorize(factor)
-    y = neutralize(x, industry, cap)
-    ret = standardize(y)
+    y = standardize(x)
+    ret = neutralize(y, industry, cap)
     return ret
 
 
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     index = ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ', '000006.SZ', '000007.SZ', '000008.SZ',
              '000009.SZ', '000010.SZ']
     factor = [10, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
-              1.0]
+              20.0]
     industry = ['801190.SI', '801190.SI', '801200.SI', '801200.SI', '801200.SI', '801200.SI', '801200.SI', '801200.SI',
                 '801200.SI', '801200.SI', '801201.SI']
     cap = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
