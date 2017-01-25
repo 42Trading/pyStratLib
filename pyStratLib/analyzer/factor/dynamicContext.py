@@ -87,9 +87,9 @@ class DCAMAnalyzer(object):
             nextDate = self._tiaoCangDate[j+1]
             groupLow, groupHigh = self._getSecGroup(layerFactor, date)         #分组
             returnLow = self._getSecReturn(groupLow, nextDate)
-            returnHigh = self._getSecReturn(groupHigh, nextDate)     #得到当期收益序列
+            returnHigh = self._getSecReturn(groupHigh, nextDate)     #得到下期收益序列
             factorLow = self._getAlphaFactor(groupLow, date)
-            factorHigh = self._getAlphaFactor(groupHigh, date)      #得到上期因子序列
+            factorHigh = self._getAlphaFactor(groupHigh, date)      #得到当期因子序列
             tableLow = pd.concat([returnLow, factorLow], axis=1)
             tableHigh = pd.concat([returnHigh, factorHigh], axis=1)
             for k in self._alphaFactorNames:
@@ -279,7 +279,7 @@ def DCAMSelector(analyzeFactorOnly=False):
                            'EquityGrowth_YOY': FactorNormType.IndustryAndCapNeutral, # 分层因子
                            'ROE': FactorNormType.IndustryAndCapNeutral,   # 分层因子
                            'EP2_TTM': FactorNormType.IndustryAndCapNeutral, # alpha因子
-                           #'SP_TTM': FactorNormType.IndustryAndCapNeutral, # alpha 因子
+                           'SP_TTM': FactorNormType.IndustryAndCapNeutral, # alpha 因子
                            'GP2Asset': FactorNormType.IndustryAndCapNeutral, # alpha因子
                            'PEG': FactorNormType.IndustryAndCapNeutral, # alpha因子
                            'ProfitGrowth_Qr_YOY': FactorNormType.IndustryAndCapNeutral, # alpha因子
@@ -291,7 +291,7 @@ def DCAMSelector(analyzeFactorOnly=False):
     factorData = factor.getNormFactorData()
 
     analyzer = DCAMAnalyzer(layerFactor=[factorData['MV']],
-                            alphaFactor=[factorData['BP_LF'], factorData['ROE'], factorData['EP2_TTM'], factorData['GP2Asset'], factorData['PEG'],
+                            alphaFactor=[factorData['BP_LF'],factorData['ROE'], factorData['EP2_TTM'], factorData['SP_TTM'], factorData['GP2Asset'], factorData['PEG'],
                              factorData['EquityGrowth_YOY'], factorData['ProfitGrowth_Qr_YOY'], factorData['TO_adj']],
                             secReturn=factorData['RETURN'],
                             tiaoCangDate=factor.getTiaoCangDate())
@@ -313,5 +313,5 @@ def DCAMSelector(analyzeFactorOnly=False):
 
 
 if __name__ == "__main__":
-    DCAMSelector()
+    DCAMSelector(analyzeFactorOnly=True)
 
