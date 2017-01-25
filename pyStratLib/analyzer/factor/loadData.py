@@ -13,7 +13,7 @@ from pyStratLib.utils.dateutils import getPosAdjDate
 _factorPathDict = {
     'MV': ['..//..//data//factor//MktCap.csv', 'm'],  # 总市值, 月度频率 -- 分层因子
     'BP_LF': ['..//..//data//factor//BP_LF.csv', 'm'],  # 最近财报的净资产/总市值, 季度频率 -- 分层因子/alpha测试因子
-    'EquityGrowth_YOY': ['..//..//data//factor//ProfitYoY.csv', 'q'],  # 净资产同比增长率, 季度频率 -- 分层因子
+    'EquityGrowth_YOY': ['..//..//data//factor//EquityGrowth_YOY.csv', 'q'],  # 净资产同比增长率, 季度频率 -- 分层因子
     'ROE': ['..//..//data//factor//ROE.csv', 'q'],  # 净资产收益率, 季度频率 -- 分层因子
 
     'EP2_TTM': ['..//..//data//factor//EP2_TTM.csv', 'q'],  # 剔除非经常性损益的过去12 个月净利润/总市值, 季度频率 -- alpha测试因子
