@@ -22,6 +22,19 @@ class Benchmark(object):
         ret = industryWeightOnDate['nbSec'].to_dict()
         return ret
 
+    @classmethod
+    def mapIndustryCodeToName(cls, industry):
+        """
+        :param industry: pd.Series, index = secID, value = industry code
+        :return:
+        """
+        industry = industry.copy()
+        industryDict = industry.to_dict()
+        id2name = {industryDict[id]: id for id in industryDict.keys()}
+        industry['industryName'] = industry.apply(lambda x: id2name[x])
+        ret = industry['industryName']
+        return ret
+
 
 
 _industryDict = {
