@@ -118,7 +118,7 @@ class FactorLoader(object):
         for name in self.__factorNames:
             pathToUse = _factorPathDict[name][0]
             originalFreq = _factorPathDict[name][1]
-            if originalFreq <> self.__freq:
+            if originalFreq != self.__freq:
                 factorRaw = getUniverseSingleFactor(pathToUse)
                 factor = adjustFactorDate(factorRaw, self.__startDate, self.__endDate, self.__freq)
             else:

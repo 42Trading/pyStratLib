@@ -7,32 +7,35 @@ class Benchmark(object):
         self.__industryWeight = industryWeight
 
     def getIndustryWeightOnDate(self, date):
-        return getMultiIndexData(self.__industryWeight, 'tradeDate', date)
+        return getMultiIndexData(self.__industryWeight, 'tiaoCangDate', date)
 
     def getIndustryWeightOnName(self, industryName):
         if not industryName.endwith('SI'):
             industryName = _industryDict.keys()[_industryDict.values().index(industryName)]
         return getMultiIndexData(self.__industryWeight, 'secID', industryName)
 
-    #industry neutral selection
     def calcNbSecSelectedOnDate(self, date, nbSecSelected=100):
+        """
+        :param date:
+        :param nbSecSelected:
+        :return: dict, key = industry, value = nb sec to be selected
+        """
         industryWeightOnDate = self.getIndustryWeightOnDate(date)
-        industryWeightOnDate['nbSec'] = industryWeightOnDate['weight'] * nbSecSelected
-        industryWeightOnDate.reset_index().set_index('secID')
-        ret = industryWeightOnDate['nbSec'].to_dict()
+        nbSecSelectedByIndustry = industryWeightOnDate * nbSecSelected
+        nbSecSelectedByIndustry.reset_index().set_index('secID')
+        nbSecSelectedByIndustry = nbSecSelectedByIndustry[[industryWeightOnDate.name]]
+        ret = nbSecSelectedByIndustry.to_dict()
         return ret
 
     @classmethod
     def mapIndustryCodeToName(cls, industry):
         """
         :param industry: pd.Series, index = secID, value = industry code
-        :return:
+        :return: pd.Series, index = secID, value = industry name
         """
         industry = industry.copy()
-        industryDict = industry.to_dict()
-        id2name = {industryDict[id]: id for id in industryDict.keys()}
-        industry['industryName'] = industry.apply(lambda x: id2name[x])
-        ret = industry['industryName']
+        ret = industry.apply(lambda x: _industryDict[x])
+        ret.name = 'industryName'
         return ret
 
 

@@ -13,13 +13,15 @@ class Selector(object):
                  industry=None,
                  nbSecSelected=100,
                  benchmark=None,
-                 saveFile=False):
+                 saveFile=False,
+                 useIndustryName=True):
         """
         :param secScore: pd.Series, index = [tiaoCangDate, secID], value = score
         :param industry: pd.Series, optional, index = [tiaoCangDate, secID], value = industry name
         :param nbSecSelected: int, optional, nb sec to be selected
         :param benchmark: Benchmark class object, optional
         :param saveFile: bool, optional, save result to csv or not
+        :param useIndustryName: bool, optional, whether to use name instead of code in return dataframe
         :return:
         """
         self._secScore = secScore
@@ -30,7 +32,8 @@ class Selector(object):
         self._saveFile = saveFile
         self._secSelected = None
         self._tiaoCangDate = list(set(self._secScore.index.get_level_values('tiaoCangDate').tolist()))
-        self._industryNeutral = True if self._benchmark is not None else False
+        self._industryNeutral = True
+        self._useIndustryName = useIndustryName
 
     @property
     def secSelected(self):
@@ -48,7 +51,11 @@ class Selector(object):
 
     def secSelection(self):
         if self._industry is not None:
-            secScore = pd.concat([self._secScore, self._industry], join_axes=[self._secScore.index], axis=1)
+            if self._useIndustryName:
+                secScore = pd.concat([self._secScore, Benchmark.mapIndustryCodeToName(self._industry)],
+                                     join_axes=[self._secScore.index], axis=1)
+            else:
+                secScore = pd.concat([self._secScore, self._industry], join_axes=[self._secScore.index], axis=1)
         ret = pd.DataFrame()
         for date in self._tiaoCangDate:
             secScoreOnDate = getMultiIndexData(secScore, 'tiaoCangDate', date)

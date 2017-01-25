@@ -273,7 +273,7 @@ class DCAMAnalyzer(object):
 
 def DCAMSelector(analyzeFactorOnly=False):
 
-    factor = FactorLoader('2006-10-05', '2016-10-31',
+    factor = FactorLoader('2015-10-05', '2016-10-31',
                           {'MV': FactorNormType.Null, # 分层因子
                            'BP_LF': FactorNormType.IndustryAndCapNeutral, # 分层因子
                            'EquityGrowth_YOY': FactorNormType.IndustryAndCapNeutral, # 分层因子
@@ -305,7 +305,7 @@ def DCAMSelector(analyzeFactorOnly=False):
         selector = Selector(secScore=secScore,
                             industry=factorData['INDUSTRY'],
                             benchmark=benchmark)
-        selector.industryNeutral = False
+        selector.industryNeutral = True
         selector.secSelection()
         print selector.secSelected
 
@@ -313,5 +313,5 @@ def DCAMSelector(analyzeFactorOnly=False):
 
 
 if __name__ == "__main__":
-    DCAMSelector(analyzeFactorOnly=True)
+    DCAMSelector(analyzeFactorOnly=False)
 
