@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from numpy import nan
+import numpy as np
 from pyStratLib.analyzer.factor.loadData import getMultiIndexData
+
 
 class Benchmark(object):
     def __init__(self, industryWeight):
@@ -21,10 +24,13 @@ class Benchmark(object):
         :return: dict, key = industry, value = nb sec to be selected
         """
         industryWeightOnDate = self.getIndustryWeightOnDate(date)
-        nbSecSelectedByIndustry = industryWeightOnDate * nbSecSelected/100.0
-        nbSecSelectedByIndustry  = nbSecSelectedByIndustry.astype(int)
+        nbSecSelectedByIndustry = industryWeightOnDate * nbSecSelected / 100.0
+        nbSecSelectedByIndustry = nbSecSelectedByIndustry.astype(int)
         nbSecSelectedByIndustry = nbSecSelectedByIndustry.reset_index().set_index('secID')
-        ret = nbSecSelectedByIndustry[industryWeightOnDate.name].to_dict()
+        ret = nbSecSelectedByIndustry[industryWeightOnDate.name]
+        # 考虑股票没有属于任何行业的情况
+        ret[nan] = nbSecSelected - np.sum(ret)
+        ret = ret.to_dict()
         return ret
 
     @classmethod
@@ -37,7 +43,6 @@ class Benchmark(object):
         ret = industry.apply(lambda x: _industryDict[x])
         ret.name = industry.name
         return ret
-
 
 
 _industryDict = {
@@ -74,6 +79,6 @@ _industryDict = {
     '801730.SI': '电气设备',
     '801720.SI': '建筑装饰',
     '801710.SI': '建筑材料',
-    '801890.SI': '机械设备'
+    '801890.SI': '机械设备',
+    nan: '无行业'
 }
-
