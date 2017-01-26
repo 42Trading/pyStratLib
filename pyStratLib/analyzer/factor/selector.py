@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import pandas as pd
+from PyFin.Utilities import pyFinAssert
 from pyStratLib.analyzer.benchmark.benchmark import Benchmark
 from pyStratLib.analyzer.factor.cleanData import getMultiIndexData
-from PyFin.Utilities import pyFinAssert
 from pyStratLib.utils.misc import top
-
 
 
 class Selector(object):
@@ -49,7 +48,6 @@ class Selector(object):
         pyFinAssert(isinstance(flag, bool), TypeError, "flag must be bool type variable")
         self._industryNeutral = flag
 
-
     def secSelection(self):
         if self._industry is not None:
             secScore = pd.concat([self._secScore, self._industry], join_axes=[self._secScore.index], axis=1)
@@ -61,10 +59,10 @@ class Selector(object):
                 pyFinAssert(self._industry is not None, ValueError, "industry information missing ")
                 nbSecByIndustry = self._benchmark.calcNbSecSelectedOnDate(date)
                 for name, group in secScoreOnDate.groupby(self._industry.name):
-                    largestScore = group.apply(top, n=nbSecByIndustry[name])
+                    largestScore = top(group, column='score', n=nbSecByIndustry[name])
                     ret = pd.concat([ret, largestScore], axis=0)
             else:
-                secScoreOnDate = secScoreOnDate[:self._nbSecSelected+1]
+                secScoreOnDate = secScoreOnDate[:self._nbSecSelected + 1]
                 ret = pd.concat([ret, secScoreOnDate], axis=0)
 
         if self._useIndustryName:
@@ -75,7 +73,3 @@ class Selector(object):
         self._secSelected = ret
 
         return
-
-
-
-
