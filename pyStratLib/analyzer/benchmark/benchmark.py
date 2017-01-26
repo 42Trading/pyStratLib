@@ -21,10 +21,10 @@ class Benchmark(object):
         :return: dict, key = industry, value = nb sec to be selected
         """
         industryWeightOnDate = self.getIndustryWeightOnDate(date)
-        nbSecSelectedByIndustry = industryWeightOnDate * nbSecSelected
-        nbSecSelectedByIndustry.reset_index().set_index('secID')
-        nbSecSelectedByIndustry = nbSecSelectedByIndustry[[industryWeightOnDate.name]]
-        ret = nbSecSelectedByIndustry.to_dict()
+        nbSecSelectedByIndustry = industryWeightOnDate * nbSecSelected/100.0
+        nbSecSelectedByIndustry  = nbSecSelectedByIndustry.astype(int)
+        nbSecSelectedByIndustry = nbSecSelectedByIndustry.reset_index().set_index('secID')
+        ret = nbSecSelectedByIndustry[industryWeightOnDate.name].to_dict()
         return ret
 
     @classmethod
@@ -35,7 +35,7 @@ class Benchmark(object):
         """
         industry = industry.copy()
         ret = industry.apply(lambda x: _industryDict[x])
-        ret.name = 'industryName'
+        ret.name = industry.name
         return ret
 
 

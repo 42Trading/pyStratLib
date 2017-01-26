@@ -4,6 +4,7 @@ import pandas as pd
 from pyStratLib.analyzer.benchmark.benchmark import Benchmark
 from pyStratLib.analyzer.factor.cleanData import getMultiIndexData
 from PyFin.Utilities import pyFinAssert
+from pyStratLib.utils.misc import top
 
 
 
@@ -51,11 +52,7 @@ class Selector(object):
 
     def secSelection(self):
         if self._industry is not None:
-            if self._useIndustryName:
-                secScore = pd.concat([self._secScore, Benchmark.mapIndustryCodeToName(self._industry)],
-                                     join_axes=[self._secScore.index], axis=1)
-            else:
-                secScore = pd.concat([self._secScore, self._industry], join_axes=[self._secScore.index], axis=1)
+            secScore = pd.concat([self._secScore, self._industry], join_axes=[self._secScore.index], axis=1)
         ret = pd.DataFrame()
         for date in self._tiaoCangDate:
             secScoreOnDate = getMultiIndexData(secScore, 'tiaoCangDate', date)
@@ -63,12 +60,20 @@ class Selector(object):
             if self._industryNeutral:
                 pyFinAssert(self._industry is not None, ValueError, "industry information missing ")
                 nbSecByIndustry = self._benchmark.calcNbSecSelectedOnDate(date)
-                for name, group in secScoreOnDate.groupby('industry'):
-                    ret = pd.concat([ret, group.nlargest(nbSecByIndustry[name], 'score')], axis=0)
+                for name, group in secScoreOnDate.groupby(self._industry.name):
+                    largestScore = group.apply(top, n=nbSecByIndustry[name])
+                    ret = pd.concat([ret, largestScore], axis=0)
             else:
                 secScoreOnDate = secScoreOnDate[:self._nbSecSelected+1]
                 ret = pd.concat([ret, secScoreOnDate], axis=0)
+
+        if self._useIndustryName:
+            industryName = Benchmark.mapIndustryCodeToName(ret[self._industry.name])
+            ret = ret['score']
+            ret = pd.concat([ret, industryName], join_axes=[ret.index], axis=1)
+
         self._secSelected = ret
+
         return
 
 
