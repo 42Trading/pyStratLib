@@ -74,6 +74,7 @@ def neutralize(factor, industry, cap=None):
     # 通过concat把数据对齐
     pyFinWarning(factor.size == industry.size, Warning, "size of factor does not equal that of industry")
     if cap is None:
+        # TODO: Think about ticker with no industry code
         data = pd.concat([factor, industry], join='inner', axis=1)
         lcap = None
     else:
