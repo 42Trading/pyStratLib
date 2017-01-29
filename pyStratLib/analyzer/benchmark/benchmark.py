@@ -29,7 +29,7 @@ class Benchmark(object):
         nbSecSelectedByIndustry = nbSecSelectedByIndustry.reset_index().set_index('secID')
         ret = nbSecSelectedByIndustry[industryWeightOnDate.name]
         # 考虑股票没有属于任何行业的情况
-        ret[nan] = nbSecSelected - np.sum(ret)
+        ret.loc[nan] = nbSecSelected - np.sum(ret)
         ret = ret.to_dict()
         return ret
 
