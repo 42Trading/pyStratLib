@@ -74,9 +74,17 @@ class WindMarketDataHandler(object):
         return ret
 
     def getSecIDsData(self):
-        ret = pd.Series()
+        """
+        :return: pd.DataFrame, multi index = [tradeDate, secID]
+        """
+        ret = pd.DataFrame()
         for secID in self._secID:
-            ret[secID] = self.getSingleSecIDData(secID)
+            data = self.getSingleSecIDData(secID)
+            tradeDateIndex = data.index.tolist()
+            secIDIndex = [secID] * len(data)
+            index = pd.MultiIndex.from_arrays([tradeDateIndex, secIDIndex], names=['tradeDate', 'secID'])
+            multiIndexData = pd.DataFrame(data.values, index=index)
+            ret = pd.concat([ret, multiIndexData], axis=0)
         return ret
 
 if __name__ == "__main__":
