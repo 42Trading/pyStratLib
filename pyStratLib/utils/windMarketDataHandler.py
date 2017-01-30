@@ -7,6 +7,8 @@ from enum import IntEnum
 from enum import unique
 import pandas as pd
 from WindPy import w
+from PyFin.Utilities import pyFinAssert
+from pyStratLib.enums.dfReturn import dfReturnType
 
 @unique
 class FreqType(IntEnum):
@@ -18,12 +20,13 @@ class FreqType(IntEnum):
 
 class WindMarketDataHandler(object):
 
-    def __init__(self, secID, startDate, endDate, freq=None, fields=None):
+    def __init__(self, secID, startDate, endDate, freq=None, fields=None, returnType=dfReturnType.DateIndexAndSecIDCol):
         self._secID = secID
         self._startDate = startDate
         self._endDate = endDate
         self._freq = FreqType.EOD if freq is None else freq
-        self._fields = 'open,high,low,close,volume' if fields is None else fields
+        self._fields = ['open', 'high', 'low', 'close', 'volume'] if fields is None else fields
+        self._returnType = returnType
 
     @property
     def dataFreq(self):
@@ -41,7 +44,15 @@ class WindMarketDataHandler(object):
     def dataFields(self, fields):
         self._fields = fields
 
-    def getSingleSecIDData(self, secID=None):
+    @property
+    def returnFormat(self):
+        return self._returnType
+
+    @returnFormat.setter
+    def dataFreq(self, returnType):
+        self._returnType = returnType
+
+    def getSingleSecData(self, secID=None):
         secID = self._secID[0] if secID is None else secID
         ret = pd.DataFrame()
         w.start()
@@ -57,38 +68,40 @@ class WindMarketDataHandler(object):
                 rawData = w.wsi(secID, self._fields, startTime, endTime, barSize)
 
             if rawData is not None:
-                 output = {'tradeDate':rawData.Times,
-                            'open':rawData.Data[0],
-                            'high':rawData.Data[1],
-                            'low':rawData.Data[2],
-                            'close':rawData.Data[3],
-                            'volume':rawData.Data[4]}
-                 ret = pd.DataFrame(output)
-                 if self._freq == FreqType.EOD:
-                     ret['tradeDate'] = ret['tradeDate'].apply(lambda x: x.strftime('%Y-%m-%d'))
-                 ret = ret.set_index('tradeDate')
+                output = {'tradeDate':rawData.Times}
+                for field in self._fields:
+                    output[field] = rawData.Data[self._fields.index(field)]
+                ret = pd.DataFrame(output)
+                if self._freq == FreqType.EOD:
+                    ret['tradeDate'] = ret['tradeDate'].apply(lambda x: x.strftime('%Y-%m-%d'))
+                ret = ret.set_index('tradeDate')
         except ValueError:
             pass
 
         w.stop()
         return ret
 
-    def getSecIDsData(self):
+    def getSecPriceData(self):
         """
-        :return: pd.DataFrame, multi index = [tradeDate, secID]
+        :return: pd.DataFrame, index=[tradeDate], cols = sec id
+        this return format is to be consistent with alphalens package
         """
         ret = pd.DataFrame()
-        for secID in self._secID:
-            data = self.getSingleSecIDData(secID)
-            tradeDateIndex = data.index.tolist()
-            secIDIndex = [secID] * len(data)
-            index = pd.MultiIndex.from_arrays([tradeDateIndex, secIDIndex], names=['tradeDate', 'secID'])
-            multiIndexData = pd.DataFrame(data.values, index=index)
-            ret = pd.concat([ret, multiIndexData], axis=0)
+        if self._returnType == dfReturnType.DateIndexAndSecIDCol:
+            pyFinAssert(len(self._fields) == 1,
+                        'each sec id must query only 1 fields of data while in fact {f} fields is queried'.format(len(self._fields)))
+            for secID in self._secID:
+                data = self.getSingleSecData(secID)
+                ret = pd.concat([ret, data], axis=1)
+            ret.columns = self._secID
+        else:
+            raise NotImplementedError
+
         return ret
 
 if __name__ == "__main__":
     windData = WindMarketDataHandler(secID=['000300.SH', '000001.SZ'],
                                      startDate='2015-01-01',
-                                     endDate='2015-02-01')
-    print windData.getSecIDsData()
+                                     endDate='2015-02-01',
+                                     fields='close')
+    print windData.getSecPriceData()
