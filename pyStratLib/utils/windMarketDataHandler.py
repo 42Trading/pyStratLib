@@ -89,7 +89,7 @@ class WindMarketDataHandler(object):
         ret = pd.DataFrame()
         if self._returnType == dfReturnType.DateIndexAndSecIDCol:
             pyFinAssert(len(self._fields) == 1,
-                        'each sec id must query only 1 fields of data while in fact {f} fields is queried'.format(len(self._fields)))
+                        'each sec id must query only 1 fields of data while in fact {} fields is queried'.format(len(self._fields)))
             for secID in self._secID:
                 data = self.getSingleSecData(secID)
                 ret = pd.concat([ret, data], axis=1)
@@ -103,5 +103,5 @@ if __name__ == "__main__":
     windData = WindMarketDataHandler(secID=['000300.SH', '000001.SZ'],
                                      startDate='2015-01-01',
                                      endDate='2015-02-01',
-                                     fields='close')
+                                     fields=['close'])
     print windData.getSecPriceData()
