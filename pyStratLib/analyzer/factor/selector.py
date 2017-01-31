@@ -30,6 +30,7 @@ class Selector(object):
         self._nbSecSelected = nbSecSelected
         self._benchmark = benchmark
         self._saveFile = saveFile
+        self._secSelectedFullInfo = None
         self._secSelected = None
         self._tiaoCangDate = list(set(self._secScore.index.get_level_values('tiaoCangDate').tolist()))
         self._industryNeutral = True
@@ -40,6 +41,10 @@ class Selector(object):
         return self._secSelected
 
     @property
+    def secSelectedFullInfo(self):
+        return self._secSelectedFullInfo
+
+    @property
     def industryNeutral(self):
         return self._industryNeutral
 
@@ -48,9 +53,26 @@ class Selector(object):
         pyFinAssert(isinstance(flag, bool), TypeError, "flag must be bool type variable")
         self._industryNeutral = flag
 
+    def _saveSecSelectedFromFullInfo(self, secSelectedFullInfo):
+        """
+        :param secSelectedFullInfo: pd.DataFrame, multi index =[tiaoCangDate, secID], value = score / industry
+        :return: pd.Series, index = tiaoCangDate, value = list of secID selected
+        """
+
+        datelist = secSelectedFullInfo.index.get_level_values('tiaoCangDate').tolist()
+        ret = pd.Series()
+        for date in datelist:
+            slicedData = getMultiIndexData(secSelectedFullInfo, 'tiaoCangDate', date)
+            secIDs = slicedData.index.get_level_values('secID').tolist()
+            ret[date] = secIDs
+
+        return ret
+
     def secSelection(self):
         if self._industry is not None:
             secScore = pd.concat([self._secScore, self._industry], join_axes=[self._secScore.index], axis=1)
+        else:
+            secScore = self._secScore
         ret = pd.DataFrame()
         for date in self._tiaoCangDate:
             secScoreOnDate = getMultiIndexData(secScore, 'tiaoCangDate', date)
@@ -70,7 +92,8 @@ class Selector(object):
             ret = ret['score']
             ret = pd.concat([ret, industryName], join_axes=[ret.index], axis=1)
 
-        self._secSelected = ret
+        self._secSelectedFullInfo = ret
+        self._secSelected = self._saveSecSelectedFromFullInfo(ret)
 
         return
 
@@ -78,10 +101,10 @@ class Selector(object):
         """
         :return: list of universal sec ids that are appeared in selections
         """
-        if self._secSelected is None:
+        if self._secSelectedFullInfo is None:
             self.secSelection()
 
-        ret = self._secSelected.index.get_level_values('secID').tolist()
+        ret = self._secSelectedFullInfo.index.get_level_values('secID').tolist()
         ret = list(set(ret))
 
         return ret
