@@ -73,3 +73,15 @@ class Selector(object):
         self._secSelected = ret
 
         return
+
+    def secSelectedUniverse(self):
+        """
+        :return: list of universal sec ids that are appeared in selections
+        """
+        if self._secSelected is None:
+            self.secSelection()
+
+        ret = self._secSelected.index.get_level_values('secID').tolist()
+        ret = list(set(ret))
+
+        return ret
