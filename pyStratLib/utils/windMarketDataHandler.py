@@ -59,12 +59,12 @@ class WindMarketDataHandler(object):
         try:
             # 一次只能一个品种
             if self._freq == FreqType.EOD:
-                rawData = w.wsd(secID, self._fields, self._startDate, self._endDate)
+                rawData = w.wsd(secID, self._fields, self._startDate, self._endDate,'Fill=Previous')
             else:
                 #TODO starttime and endtime in fact should depend on type of sec, i.e. some sec has night session markets
                 startTime = self._startDate + '09:00:00'
                 endTime = self._endDate + '15:00:00'
-                barSize = 'BarSize=' + str(self._freq)
+                barSize = 'BarSize=' + str(self._freq) + ',Fill=Previous'
                 rawData = w.wsi(secID, self._fields, startTime, endTime, barSize)
 
             if rawData is not None:
