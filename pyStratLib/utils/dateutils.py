@@ -55,7 +55,7 @@ def getPosAdjDate(startDate, endDate, format="%Y-%m-%d", calendar='China.SSE', f
     cal = Calendar(calendar)
     posAdjustDate = Schedule(dStartDate,
                              dEndDate,
-                             Period(1, _freqDict[freq]),
+                             Period(length=1, units=_freqDict[freq]),
                              cal,
                              BizDayConventions.Unadjusted)
     # it fails if setting dStartDate to be first adjustment date, then use Schedule to compute the others
